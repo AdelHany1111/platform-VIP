@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounting Information Systems - Lecture 3</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --bg-dark: #050505;
+            --bg-card: #121212;
+            --gold-primary: #D4AF37;
+            --gold-light: #F3E5AB;
+            --gold-dark: #AA8C2C;
+            --text-main: #E8E8E8;
+            --text-muted: #A0A0A0;
+            --danger: #FF4C4C;
+            --success: #4CAF50;
+            --shadow-gold: 0 4px 15px rgba(212, 175, 55, 0.15);
+            --shadow-gold-glow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top center, #1a1a1a 0%, var(--bg-dark) 100%);
+            color: var(--text-main);
+            line-height: 1.8;
+            font-size: 16px;
+            padding: 15px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Typography & Highlighting */
+        h1, h2, h3 {
+            color: var(--gold-primary);
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .en-term {
+            color: var(--gold-light);
+            font-weight: bold;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            direction: ltr;
+            display: inline-block;
+            background: rgba(212, 175, 55, 0.1);
+            padding: 0 5px;
+            border-radius: 4px;
+        }
+
+        .highlight-red { color: var(--danger); font-weight: bold; }
+        .highlight-green { color: var(--success); font-weight: bold; }
+
+        /* Cards Layout */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-gold);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
+        }
+
+        /* Tables */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid var(--gold-primary);
+            box-shadow: var(--shadow-gold);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            direction: ltr;
+            background: #0f0f0f;
+        }
+
+        th {
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--gold-primary);
+            padding: 12px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--gold-primary);
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-main);
+        }
+
+        tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+        tr:hover { background: rgba(212, 175, 55, 0.05); }
+
+        /* Motivational Quotes */
+        .quote-box {
+            text-align: center;
+            font-style: italic;
+            color: var(--gold-dark);
+            margin: 40px 0;
+            font-size: 1.2rem;
+            position: relative;
+        }
+        .quote-box::after, .quote-box::before {
+            content: '✨';
+            margin: 0 10px;
+            color: var(--gold-primary);
+        }
+
+        /* MCQs */
+        .mcq-box {
+            background: rgba(0,0,0,0.4);
+            border-right: 4px solid var(--gold-primary);
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 8px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .mcq-box h4 {
+            color: var(--gold-light);
+            margin-bottom: 10px;
+        }
+
+        .mcq-option {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .mcq-option:hover { background: rgba(212, 175, 55, 0.1); }
+        
+        .mcq-btn {
+            background: var(--gold-primary);
+            color: var(--bg-dark);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .mcq-result {
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        /* MathML Container */
+        .math-container {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow-x: auto;
+            text-align: center;
+            border: 1px dashed var(--gold-dark);
+        }
+
+        /* SVG & Decor */
+        .svg-arrow-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Rotator */
+        .rotator-container {
+            background: #080808;
+            border: 2px solid var(--gold-dark);
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 50px;
+            box-shadow: var(--shadow-gold-glow);
+        }
+
+        .rotator-text {
+            font-family: 'Amiri', serif;
+            font-size: 1.4rem;
+            color: var(--gold-light);
+            transition: opacity 1s ease-in-out;
+            opacity: 1;
+        }
+
+        .fade-out { opacity: 0; }
+
+        .footer-credit {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding-bottom: 30px;
+        }
+
+        .telegram-btn {
+            display: block;
+            text-align: center;
+            background: linear-gradient(45deg, #0088cc, #00aaff);
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4);
+            transition: 0.3s;
+        }
+        
+        .telegram-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 136, 204, 0.6);
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.5rem; }
+            .card { padding: 15px; }
+            th, td { font-size: 0.85rem; padding: 8px; }
+            .math-container math { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="card" style="text-align: center; border-color: var(--gold-primary);">
+        <h1 style="font-size: 2rem; margin-bottom: 5px;">Accounting Information Systems</h1>
+        <h3 style="color: var(--text-muted); margin-bottom: 5px;">2nd Year – English Section</h3>
+        <p style="color: var(--gold-light);">Accounting Department | 2026</p>
+        <p style="color: var(--gold-dark); font-weight: bold; margin-top: 10px;">2nd Semester - Lecture No. 3</p>
+    </div>
+
+    <!-- Intro & Theory -->
+    <div class="card">
+        <h2>مستويات توفر المعلومات <br> (Levels of Information Availability)</h2>
+        <p>أهلاً بيكم يا شباب، زي ما اتكلمنا قبل كده، عملية اتخاذ القرار <span class="en-term">Decision-making process</span> بتعتمد بشكل أساسي على جودة وكمية المعلومات المتاحة <span class="en-term">quality and quantity of available information</span>. طيب، إحنا عندنا كام حالة للمعلومات؟ عندنا <span class="en-term">Three levels</span>:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+            <div style="border-right: 3px solid var(--danger); padding-right: 10px; background: rgba(255,0,0,0.05); padding: 10px;">
+                <span class="highlight-red en-term">1. Uncertainty (عدم اليقين):</span><br>
+                في الحالة دي المستخدمين معندهمش أي معلومات خالص <span class="en-term">users have no information</span>. نسبة الاحتمال هنا <span class="en-term">Probability = 0%</span>. يعني إنت بتاخد قرار وإنت مغمض!
+            </div>
+            <div style="border-right: 3px solid #ff9800; padding-right: 10px; background: rgba(255,152,0,0.05); padding: 10px;">
+                <span style="color:#ff9800; font-weight:bold;" class="en-term">2. Risk (المخاطرة):</span><br>
+                هنا بقى في شوية معلومات <span class="en-term">users have some information</span>. نسبة الاحتمال بتكون أكبر من صفر وأقل من 100% <span class="en-term">0% < Probability < 100%</span>.
+            </div>
+            <div style="border-right: 3px solid var(--success); padding-right: 10px; background: rgba(0,255,0,0.05); padding: 10px;">
+                <span class="highlight-green en-term">3. Certainty (اليقين):</span><br>
+                دي أحسن حالة! المستخدم عنده معلومات كاملة <span class="en-term">perfect information</span>. نسبة الاحتمال هنا مؤكدة <span class="en-term">Probability = 100%</span>.
+            </div>
+        </div>
+
+        <h3 style="margin-top: 30px; font-size: 1.3rem;">إيه هي الـ Perfect Information؟</h3>
+        <p>المعلومات الكاملة <span class="en-term">Perfect information</span> هي اللي مفيش فيها أي حاجة مستخبية <span class="en-term">(no hidden information)</span>. وهي دي الكمية من المعلومات اللي بتنقلك من مرحلة المخاطرة لمرحلة اليقين <span class="en-term">transfers users from risk to certainty</span>.</p>
+        
+        <div style="background: rgba(212, 175, 55, 0.1); padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <h4 style="color: var(--gold-primary); text-align: center;">القيمة المتوقعة للمعلومات الكاملة<br><span class="en-term">Expected Value of Perfect Information (EVPI)</span></h4>
+            <p style="text-align: center;">هي <strong>أقصى مبلغ</strong> إنت مستعد تدفعه عشان تحصل على المعلومات الكاملة دي.<br> <span class="en-term">is the maximum amount that one will be willing to pay to gain access to the perfect information.</span></p>
+        </div>
+
+        <div class="math-container" dir="ltr">
+            <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mrow>
+                    <mi mathcolor="#D4AF37" mathvariant="bold">EVPI</mi>
+                    <mo mathcolor="#E8E8E8">=</mo>
+                    <mo mathcolor="#E8E8E8">|</mo>
+                    <mi mathcolor="#4CAF50" mathvariant="bold">EV under PI</mi>
+                    <mo mathcolor="#E8E8E8">-</mo>
+                    <mi mathcolor="#FF4C4C" mathvariant="bold">EV without PI</mi>
+                    <mo mathcolor="#E8E8E8">|</mo>
+                </mrow>
+            </math>
+        </div>
+        <p style="text-align: center; font-size: 0.9rem;">بناخد القيمة المطلقة <span class="en-term">Absolute value</span> للفرق بين القيمة المتوقعة في ظل وجود معلومات كاملة والقيمة المتوقعة بدونها.</p>
+    </div>
+
+    <div class="quote-box">
+        النجاح لا يأتي بالصدفة، بل هو نتاج العمل الجاد والمثابرة.
+    </div>
+
+    <!-- Example 1 -->
+    <div class="card">
+        <h2>Example 1: Khaled's Restaurant</h2>
+        <p>تعالوا نطبق عملي. مطعم خالد بيفكر يفتح فرع جديد في إسكندرية، وعنده 3 نماذج للمطعم <span class="en-term">3 different models</span> كل واحد بسعة جلوس مختلفة. الإدارة بتتوقع إن متوسط عدد الزباين في الساعة هيكون 80، 100، أو 120. <br>العائد <span class="en-term">Payoff (return)</span> للـ 3 نماذج متوضح في الجدول ده:</p>
+        
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th></th>
+                    <th>S 1 = 80</th>
+                    <th>S 2 = 100</th>
+                    <th>S 3 = 120</th>
+                </tr>
+                <tr>
+                    <td><strong>Model A</strong></td>
+                    <td>$10,000</td>
+                    <td>$15,000</td>
+                    <td>$14,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Model B</strong></td>
+                    <td>$8,000</td>
+                    <td>$18,000</td>
+                    <td>$12,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Model C</strong></td>
+                    <td>$6,000</td>
+                    <td>$16,000</td>
+                    <td>$21,000</td>
+                </tr>
+                <tr>
+                    <td style="color: var(--gold-primary);"><strong>Probability</strong></td>
+                    <td style="color: var(--gold-light);">0.4</td>
+                    <td style="color: var(--gold-light);">0.2</td>
+                    <td style="color: var(--gold-light);">0.4</td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 style="text-align: right; color: var(--danger);">المطلوب (Required):</h3>
+        <ul style="padding-right: 20px;">
+            <li><span class="en-term">1. What decision should be made under the available information?</span> (إيه القرار تحت المعلومات المتاحة؟)</li>
+            <li><span class="en-term">2. What is the expected value under perfect information?</span> (القيمة المتوقعة بمعلومات كاملة؟)</li>
+            <li><span class="en-term">3. What is the expected value of perfect information (EVPI)?</span> (قيمة الـ EVPI؟)</li>
+            <li><span class="en-term">4. If a consultancy company offers to provide more information with $3000, should Khaled restaurant accept this offer?</span> (لو شركة استشارات عرضت معلومات بـ 3000 دولار، نوافق ولا لأ؟)</li>
+        </ul>
+
+        <div class="svg-arrow-container">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+            <h2 style="margin-top: -10px;">Solution</h2>
+        </div>
+
+        <p><strong class="highlight-red">Required 1:</strong> عشان ناخد قرار بالمعلومات المتاحة، لازم نحسب القيمة المتوقعة بدون معلومات كاملة <span class="en-term">Expected value without perfect information</span> لكل بديل، ونختار <strong>الأفضل (الأعلى عشان ده عائد)</strong>. بنحسبها إزاي؟ المتوسط المرجح <span class="en-term">Weighted average</span>!</p>
+        
+        <ul style="direction: ltr; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 8px; list-style: none;">
+            <li style="margin-bottom: 10px;">▪ <span class="en-term">Expected value of model (A)</span> = <br> (10,000 × 0.4) + (15,000 × 0.2) + (14,000 × 0.4) = <strong class="highlight-red">12,600</strong></li>
+            <li style="margin-bottom: 10px;">▪ <span class="en-term">Expected value of model (B)</span> = <br> (8,000 × 0.4) + (18,000 × 0.2) + (12,000 × 0.4) = <strong class="highlight-red">11,600</strong></li>
+            <li>▪ <span class="en-term">Expected value of model (C)</span> = <br> (6,000 × 0.4) + (16,000 × 0.2) + (21,000 × 0.4) = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">14,000</strong></li>
+        </ul>
+        <p style="text-align: center; margin-top: 10px; font-weight: bold; color: var(--success);">
+            Under the available information ➔ the decision is selecting model (C) <br> (لأنه جاب أعلى رقم 14,000)
+        </p>
+
+        <hr style="border-color: rgba(212,175,55,0.2); margin: 20px 0;">
+
+        <p><strong class="highlight-red">Required 2:</strong> القيمة المتوقعة <strong>بمعلومات كاملة</strong> <span class="en-term">Expected value under perfect information</span>. هنا بنختار <strong>أفضل نتيجة في كل حالة</strong> <span class="en-term">the best outcome for each state</span> ونضربها في الاحتمال بتاعها.</p>
+        
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th>State of nature</th>
+                    <th>Probability</th>
+                    <th>The best model for each state</th>
+                </tr>
+                <tr>
+                    <td>S 1</td>
+                    <td>0.4</td>
+                    <td>10,000 ➔ <strong>Model A</strong></td>
+                </tr>
+                <tr>
+                    <td>S 2</td>
+                    <td>0.2</td>
+                    <td>18,000 ➔ <strong>Model B</strong></td>
+                </tr>
+                <tr>
+                    <td>S 3</td>
+                    <td>0.4</td>
+                    <td>21,000 ➔ <strong>Model C</strong></td>
+                </tr>
+            </table>
+        </div>
+        <div style="direction: ltr; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 8px; margin-top: 10px;">
+            ▪ <span class="highlight-red">Expected value under perfect information =</span><br>
+            (10,000 × 0.4) + (18,000 × 0.2) + (21,000 × 0.4) = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">16,000</strong>
+        </div>
+
+        <hr style="border-color: rgba(212,175,55,0.2); margin: 20px 0;">
+
+        <p><strong class="highlight-red">Required 3:</strong> نحسب الـ <span class="en-term">EVPI</span>. تطبيق مباشر للقانون:</p>
+        <div style="direction: ltr; text-align: center; background: rgba(255,255,255,0.05); padding: 15px; border: 1px solid var(--gold-primary); border-radius: 8px; margin-top: 10px;">
+            EVPI = EV under PI <span class="highlight-red">16,000</span> - EV without PI <span class="highlight-red">14,000</span> = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">2,000</strong>
+        </div>
+        <p style="text-align: center; margin-top: 10px; font-size: 0.9rem;">ده معناه إن أقصى مبلغ المطعم مستعد يدفعه عشان يجيب معلومات كاملة هو 2,000 دولار.</p>
+
+        <hr style="border-color: rgba(212,175,55,0.2); margin: 20px 0;">
+
+        <p><strong class="highlight-red">Required 4:</strong> القرار بخصوص عرض شركة الاستشارات. الشركة طالبة 3,000 دولار <span class="en-term">$3000</span>. وإحنا لسه حاسبين الـ EVPI بـ 2,000. 
+        بما إن الـ 3000 أكبر من الـ EVPI، يبقى <strong>نرفض العرض!</strong></p>
+        <div style="background: rgba(255,0,0,0.1); border-right: 4px solid var(--danger); padding: 10px; direction: ltr; text-align: left;">
+            The consultancy company offers to provide more information with $3000, that is greater than EVPI, so the restaurant should <strong>not accept</strong> this offer.
+        </div>
+        <div style="background: rgba(0,255,0,0.1); border-right: 4px solid var(--success); padding: 10px; direction: ltr; text-align: left; margin-top: 10px;">
+            <strong>Rule:</strong> The restaurant could accept the offer if its price is <strong>less than</strong> the expected value of perfect information (EVPI).
+        </div>
+
+        <!-- MCQ Example 1 -->
+        <div class="mcq-box">
+            <h4>Concept Check 1</h4>
+            <p>If the consultant offered the information for $1,500 instead of $3,000, what should Khaled do?</p>
+            <label class="mcq-option"><input type="radio" name="q1" value="wrong"> A) Reject, because $1,500 is less than EVPI.</label>
+            <label class="mcq-option"><input type="radio" name="q1" value="correct"> B) Accept, because $1,500 is less than EVPI ($2,000).</label>
+            <label class="mcq-option"><input type="radio" name="q1" value="wrong"> C) Reject, because we only accept if price = EVPI.</label>
+            <button class="mcq-btn" onclick="checkAnswer('q1', 'B) Accept, because $1,500 is less than EVPI ($2,000).')">Check Answer</button>
+            <div id="res-q1" class="mcq-result"></div>
+        </div>
+    </div>
+
+    <div class="quote-box">
+        من طلب العلا سهر الليالي، ومن سار على الدرب وصل.
+    </div>
+
+    <!-- Example 2 -->
+    <div class="card">
+        <h2>Example 2: Investment Instruments</h2>
+        <p>تخيل إنك هتعمل استثمار في واحد بس من 3 أدوات استثمارية <span class="en-term">investment instruments</span>: أسهم <span class="en-term">Stocks</span>، صناديق استثمار <span class="en-term">Mutual funds</span>، أو سندات <span class="en-term">Bonds</span>. السوق ليه 3 حالات:</p>
+        <ul style="list-style-type: square; padding-right: 20px;">
+            <li>ينمو <span class="en-term">Growing</span> باحتمال 50%</li>
+            <li>مستقر <span class="en-term">Stable</span> باحتمال 30%</li>
+            <li>يتراجع <span class="en-term">Declining</span> باحتمال 20%</li>
+        </ul>
+        <p>ومدينا العوايد والخساير في كل حالة. لخصنا الكلام ده في الجدول الشيك ده:</p>
+
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th></th>
+                    <th>Growing (0.5)</th>
+                    <th>Stable (0.3)</th>
+                    <th>Declining (0.2)</th>
+                </tr>
+                <tr>
+                    <td><strong>Stocks</strong></td>
+                    <td>1,500</td>
+                    <td>300</td>
+                    <td>- 800</td>
+                </tr>
+                <tr>
+                    <td><strong>Mutual funds</strong></td>
+                    <td>900</td>
+                    <td>600</td>
+                    <td>- 200</td>
+                </tr>
+                <tr>
+                    <td><strong>Bonds</strong></td>
+                    <td>500</td>
+                    <td>500</td>
+                    <td>500</td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 style="text-align: right; color: var(--danger);">المطلوب (Required):</h3>
+        <ol style="padding-right: 20px; direction: ltr; text-align: left;">
+            <li>Which investment instrument is the best under the available information?</li>
+            <li>What is the expected value under perfect information?</li>
+            <li>What is the expected value of perfect information (EVPI)?</li>
+        </ol>
+
+        <div class="svg-arrow-container">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+            <h2 style="margin-top: -10px;">Solution</h2>
+        </div>
+
+        <p>بنفس الطريقة اللي فاتت، هنحسب الـ <span class="en-term">Expected Value</span> لكل استثمار:</p>
+        <ul style="direction: ltr; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 8px; list-style: none;">
+            <li style="margin-bottom: 10px;">▪ <span class="highlight-red">EV of stock investment</span> = <br> (1,500 × 0.5) + (300 × 0.3) + (-800 × 0.2) = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">680</strong></li>
+            <li style="margin-bottom: 10px;">▪ <span class="highlight-red">EV of mutual fund investment</span> = <br> (900 × 0.5) + (600 × 0.3) + (-200 × 0.2) = <strong>590</strong></li>
+            <li>▪ <span class="highlight-red">EV of bond investment</span> = <br> (500 × 0.5) + (500 × 0.3) + (500 × 0.2) = <strong>500</strong></li>
+        </ul>
+        <p style="text-align: center; margin-top: 10px; font-weight: bold; color: var(--success);">
+            Under the available information ➔ the best investment is the Stocks <br> (الأعلى ربح 680)
+        </p>
+
+        <hr style="border-color: rgba(212,175,55,0.2); margin: 20px 0;">
+
+        <p>بالنسبة للقيمة في ظل المعلومات الكاملة <span class="en-term">Expected value under perfect information</span> هنختار أحسن حاجة في كل حالة:</p>
+        <ul style="direction: ltr; text-align: left; padding-left: 20px;">
+            <li>Growing (0.5) ➔ Best is <strong>Stocks</strong> (1,500)</li>
+            <li>Stable (0.3) ➔ Best is <strong>Mutual funds</strong> (600)</li>
+            <li>Declining (0.2) ➔ Best is <strong>Bonds</strong> (500)</li>
+        </ul>
+        <div style="direction: ltr; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 8px; margin-top: 10px;">
+            ▪ <span class="highlight-red">EV under perfect information =</span><br>
+            (1,500 × 0.5) + (600 × 0.3) + (500 × 0.2) = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">1,030</strong>
+        </div>
+
+        <p style="margin-top: 20px;">وأخيراً نحسب الـ <span class="en-term">EVPI</span>:</p>
+        <div style="direction: ltr; text-align: center; background: rgba(255,255,255,0.05); padding: 15px; border: 1px solid var(--gold-primary); border-radius: 8px;">
+            EVPI = EV under PI <span class="highlight-red">1030</span> - EV without PI <span class="highlight-red">680</span> = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">350</strong>
+        </div>
+
+        <!-- MCQ Example 2 -->
+        <div class="mcq-box">
+            <h4>Concept Check 2</h4>
+            <p>Why did we choose Bonds as the best outcome in the "Declining" state?</p>
+            <label class="mcq-option"><input type="radio" name="q2" value="wrong"> A) Because it has the lowest probability.</label>
+            <label class="mcq-option"><input type="radio" name="q2" value="wrong"> B) Because stocks always lose.</label>
+            <label class="mcq-option"><input type="radio" name="q2" value="correct"> C) Because 500 is the highest payoff compared to -800 and -200.</label>
+            <button class="mcq-btn" onclick="checkAnswer('q2', 'C) Because 500 is the highest payoff compared to -800 and -200.')">Check Answer</button>
+            <div id="res-q2" class="mcq-result"></div>
+        </div>
+    </div>
+
+    <div class="quote-box">
+        العلم صيدٌ والكتابة قيدُه، قَيِّد صيودك بالحبال الواثقة.
+    </div>
+
+    <!-- Example 3 (Costs) -->
+    <div class="card" style="border-color: var(--danger);">
+        <h2>Example 3: El-Nasr Company <br> <span style="font-size: 1rem; color: var(--danger);">(⚠️ فخ التكاليف - Cost Minimization)</span></h2>
+        <p>ركز معايا جداً هنا! شركة النصر قررت تشتري مكنة جديدة عشان تزود الإنتاج <span class="en-term">purchase a new machine</span>. ولازم تختار بين 3 مكنات (A, B, C). الجدول اللي جاي بيوضح <strong class="highlight-red">تكلفة الصيانة السنوية <span class="en-term">annual maintenance cost</span></strong> في 3 حالات.</p>
+        <p>خد بالك من كلمتين: <strong class="highlight-red">Cost (تكلفة)</strong>، وحاجة تانية ناقصة في الجدول... وهي <span class="en-term">Probability</span> بتاعت S3 مكتوب قدامها <strong class="highlight-red">??</strong>.</p>
+
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th></th>
+                    <th>S1 (0.3)</th>
+                    <th>S2 (0.5)</th>
+                    <th>S3 (??)</th>
+                </tr>
+                <tr>
+                    <td><strong>Machine A</strong></td>
+                    <td>$12,000</td>
+                    <td>$9,000</td>
+                    <td>$13,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Machine B</strong></td>
+                    <td>$15,000</td>
+                    <td>$11,000</td>
+                    <td>$8,000</td>
+                </tr>
+                <tr>
+                    <td><strong>Machine C</strong></td>
+                    <td>$5,000</td>
+                    <td>$18,000</td>
+                    <td>$10,000</td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 style="text-align: right; color: var(--danger);">المطلوب (Required): نفس المطاليب السابقة.</h3>
+
+        <div class="svg-arrow-container">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="var(--gold-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+            <h2 style="margin-top: -10px;">Solution</h2>
+        </div>
+
+        <p><strong class="highlight-red">أول خطوة (تركة الامتحان):</strong> نجيب الاحتمال الناقص. مجموع الاحتمالات لازم يكون 1 (أو 100%).<br>
+        <span class="en-term">The probability of state 3 = 1 - (0.3 + 0.5) = <strong>0.2</strong></span><br>
+        <span style="font-size: 0.9rem; color: var(--text-muted);">(Because the sum of probabilities should equal 1)</span></p>
+
+        <p>دلوقتي نحسب الـ <span class="en-term">Expected Value</span> لكل مكنة:</p>
+        <ul style="direction: ltr; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 8px; list-style: none;">
+            <li style="margin-bottom: 10px;">▪ <span class="highlight-red">EV of machine A</span> = <br> (12,000 × 0.3) + (9,000 × 0.5) + (13,000 × 0.2) = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">10,700</strong></li>
+            <li style="margin-bottom: 10px;">▪ <span class="highlight-red">EV of machine B</span> = <br> (15,000 × 0.3) + (11,000 × 0.5) + (8,000 × 0.2) = <strong>11,600</strong></li>
+            <li>▪ <span class="highlight-red">EV of machine C</span> = <br> (5,000 × 0.3) + (18,000 × 0.5) + (10,000 × 0.2) = <strong>12,500</strong></li>
+        </ul>
+        
+        <p style="text-align: center; margin-top: 10px; font-weight: bold; color: var(--success); padding: 10px; border: 2px dashed var(--danger);">
+            Under the available information ➔ the decision is choosing machine (A)<br> 
+            <span class="highlight-red">BECAUSE IT HAS THE LOWEST COST!</span><br>
+            (إحنا هنا بنختار أقل تكلفة، مش أعلى ربح زي الأمثلة اللي فاتت!)
+        </p>
+
+        <hr style="border-color: rgba(212,175,55,0.2); margin: 20px 0;">
+
+        <p>نحسب القيمة في ظل المعلومات الكاملة <span class="en-term">Expected value under perfect information</span>. هنا هنختار <strong>أقل تكلفة (the lowest cost)</strong> في كل حالة:</p>
+        <div class="table-wrapper">
+            <table>
+                <tr>
+                    <th>State</th>
+                    <th>Prob.</th>
+                    <th>The best outcome (lowest cost)</th>
+                </tr>
+                <tr>
+                    <td>S1</td>
+                    <td>0.3</td>
+                    <td>5,000 ➔ <strong>machine (C)</strong></td>
+                </tr>
+                <tr>
+                    <td>S2</td>
+                    <td>0.5</td>
+                    <td>9,000 ➔ <strong>machine (A)</strong></td>
+                </tr>
+                <tr>
+                    <td>S3</td>
+                    <td>0.2</td>
+                    <td>8,000 ➔ <strong>machine (B)</strong></td>
+                </tr>
+            </table>
+        </div>
+        <div style="direction: ltr; text-align: left; background: #0a0a0a; padding: 15px; border-radius: 8px; margin-top: 10px;">
+            ▪ <span class="highlight-red">Expected value under perfect information =</span><br>
+            (5,000 × 0.3) + (9,000 × 0.5) + (8,000 × 0.2) = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">7,600</strong>
+        </div>
+
+        <p style="margin-top: 20px;">نحسب الـ <span class="en-term">EVPI</span>. ركز في التعويض عشان هيطلع بالسالب وهناخد القيمة المطلقة:</p>
+        <div style="direction: ltr; text-align: center; background: rgba(255,255,255,0.05); padding: 15px; border: 1px solid var(--gold-primary); border-radius: 8px;">
+            EVPI = EV under PI <span class="highlight-red">7,600</span> - EV without PI <span class="highlight-red">10,700</span> = - 3,100 = <strong style="background: yellow; color: black; padding: 2px 5px; border-radius: 3px;">3,100</strong><br>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">(The absolute value)</span>
+        </div>
+        <p style="margin-top: 10px; font-size: 0.95rem; line-height: 1.6;">
+            <strong>Note that:</strong> من غير معلومات كاملة الشركة هتشيل تكلفة 10,700، لكن بمعلومات كاملة هتشيل تكلفة 7,600 بس. ده معناه إن الشركة تقدر <strong>تقلل تكاليفها</strong> <span class="en-term">reduce its costs</span> بمقدار 3,100 لو جابت المعلومات الكاملة دي (وده هو الـ EVPI).
+        </p>
+
+        <!-- MCQ Example 3 -->
+        <div class="mcq-box">
+            <h4>Concept Check 3</h4>
+            <p>In a cost minimization problem like Example 3, how do we select the best alternative without perfect information?</p>
+            <label class="mcq-option"><input type="radio" name="q3" value="wrong"> A) By choosing the one with the highest Expected Value.</label>
+            <label class="mcq-option"><input type="radio" name="q3" value="correct"> B) By choosing the one with the lowest Expected Value.</label>
+            <label class="mcq-option"><input type="radio" name="q3" value="wrong"> C) By always picking Machine A.</label>
+            <button class="mcq-btn" onclick="checkAnswer('q3', 'B) By choosing the one with the lowest Expected Value.')">Check Answer</button>
+            <div id="res-q3" class="mcq-result"></div>
+        </div>
+    </div>
+
+    <!-- Telegram Promo Card -->
+    <div class="card" style="border: 2px solid #0088cc; box-shadow: 0 0 15px rgba(0,136,204,0.3); text-align: center;">
+        <h2 style="color: #00aaff; margin-bottom: 10px;">عايز تفهم أكتر وتجيب امتياز؟ 🚀</h2>
+        <p style="font-size: 1.1rem; margin-bottom: 15px;">لو استفدت من الشرح وعايز شروحات اكتر بالشكل دا، فـ أنا بنزلها في جروب التليجرام دا. اضغط علي الزر ف الاسفل للإنضمام.</p>
+        <a href="https://t.me/+1kdNY3Is6xw3NTE0" target="_blank" class="telegram-btn">
+            انضم لجروب التليجرام من هنا 📲
+        </a>
+    </div>
+
+    <!-- Rotator Section -->
+    <div class="rotator-container">
+        <div id="rotator-text" class="rotator-text">
+            جاري التحميل...
+        </div>
+    </div>
+
+    <div class="footer-credit">
+        <p>تم إعداد التطبيق بواسطة <strong style="color: var(--gold-primary);">Adel Hany</strong></p>
+    </div>
+
+</div>
+
+<script>
+    // MCQ Logic
+    function checkAnswer(questionName, correctAnswerText) {
+        const options = document.getElementsByName(questionName);
+        let selectedValue = null;
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].checked) {
+                selectedValue = options[i].value;
+                break;
+            }
+        }
+        
+        const resDiv = document.getElementById('res-' + questionName);
+        resDiv.style.display = 'block';
+        
+        if (selectedValue === 'correct') {
+            resDiv.style.color = 'var(--success)';
+            resDiv.innerHTML = '✅ الممتاز! إجابة صحيحة.';
+        } else if (selectedValue === 'wrong') {
+            resDiv.style.color = 'var(--danger)';
+            resDiv.innerHTML = '❌ للأسف غلط. الإجابة الصحيحة هي: <br>' + correctAnswerText;
+        } else {
+            resDiv.style.color = 'var(--gold-primary)';
+            resDiv.innerHTML = '⚠️ اختار إجابة الأول يا بطل!';
+        }
+    }
+
+    // Quran & Hadith Rotator Logic
+    const islamicQuotes = [
+        { type: 'quran', text: '﴿ وَقُل رَّبِّ زِدْنِي عِلْمًا ﴾' },
+        { type: 'quran', text: '﴿ يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ ﴾' },
+        { type: 'quran', text: '﴿ إِنَّمَا يَخْشَى اللَّهَ مِنْ عِبَادِهِ الْعُلَمَاءُ ﴾' },
+        { type: 'quran', text: '﴿ وَأَن لَّيْسَ لِلْإِنسَانِ إِلَّا مَا سَعَى ﴾' },
+        { type: 'quran', text: '﴿ هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ ﴾' },
+        { type: 'quran', text: '﴿ اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ ﴾' },
+        { type: 'quran', text: '﴿ يُؤْتِي الْحِكْمَةَ مَن يَشَاءُ ۚ وَمَن يُؤْتَ الْحِكْمَةَ فَقَدْ أُوتِيَ خَيْرًا كَثِيرًا ﴾' },
+        { type: 'quran', text: '﴿ وَعَلَّمَكَ مَا لَمْ تَكُن تَعْلَمُ ۚ وَكَانَ فَضْلُ اللَّهِ عَلَيْكَ عَظِيمًا ﴾' },
+        { type: 'quran', text: '﴿ بَلْ هُوَ آيَاتٌ بَيِّنَاتٌ فِي صُدُورِ الَّذِينَ أُوتُوا الْعِلْمَ ﴾' },
+        { type: 'quran', text: '﴿ إِنَّا لَا نُضِيعُ أَجْرَ مَنْ أَحْسَنَ عَمَلًا ﴾' },
+        { type: 'hadith', text: 'قال رسول الله ﷺ: "من سلك طريقًا يلتمس فيه علمًا، سهَّل الله له به طريقًا إلى الجنة"' },
+        { type: 'hadith', text: 'قال رسول الله ﷺ: "فضل العالم على العابد كفضلي على أدناكم"' },
+        { type: 'hadith', text: 'قال رسول الله ﷺ: "إن الملائكة لتضع أجنحتها لطالب العلم رضاً بما يصنع"' }
+    ];
+
+    const rotatorElement = document.getElementById('rotator-text');
+    let currentIndex = Math.floor(Math.random() * islamicQuotes.length);
+
+    function updateRotator() {
+        // Fade out
+        rotatorElement.classList.add('fade-out');
+        
+        setTimeout(() => {
+            // Pick next randomly, ensure it's not the exact same one consecutively
+            let nextIndex = Math.floor(Math.random() * islamicQuotes.length);
+            while (nextIndex === currentIndex) {
+                nextIndex = Math.floor(Math.random() * islamicQuotes.length);
+            }
+            currentIndex = nextIndex;
+            
+            rotatorElement.innerHTML = islamicQuotes[currentIndex].text;
+            
+            // Format styling based on type
+            if(islamicQuotes[currentIndex].type === 'quran'){
+                rotatorElement.style.color = "var(--gold-light)";
+            } else {
+                rotatorElement.style.color = "var(--success)";
+            }
+            
+            // Fade in
+            rotatorElement.classList.remove('fade-out');
+        }, 1000); // Wait for fade out CSS transition
+    }
+
+    // Initialize first text
+    rotatorElement.innerHTML = islamicQuotes[currentIndex].text;
+    if(islamicQuotes[currentIndex].type === 'quran'){
+        rotatorElement.style.color = "var(--gold-light)";
+    } else {
+        rotatorElement.style.color = "var(--success)";
+    }
+
+    // Change every 8 seconds (gives enough time to read)
+    setInterval(updateRotator, 8000);
+
+</script>
+</body>
+</html>

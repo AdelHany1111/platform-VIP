@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة طلاب تجارة إنجليزي</title>
+    <!-- خط جوجل كايرو لتصميم عربي عصري -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #3b82f6;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --success: #10b981;
+            --border-radius: 16px;
+        }
+
+        [data-theme="dark"] {
+            --primary: #60a5fa;
+            --secondary: #3b82f6;
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --text-main: #f9fafb;
+            --text-light: #9ca3af;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* الهيدر */
+        header {
+            background: var(--card-bg);
+            padding: 1rem 5%;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 { font-size: 1.5rem; color: var(--primary); }
+
+        .theme-btn {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .theme-btn:hover { background: var(--primary); color: white; }
+
+        /* شريط التقدم */
+        .progress-section {
+            width: 90%;
+            max-width: 1200px;
+            margin: 2rem auto;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .progress-bar-bg {
+            background: #e5e7eb;
+            height: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            height: 100%;
+            width: 0%;
+            transition: width 0.6s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        /* شبكة المواد */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .card.completed {
+            border-color: var(--success);
+            opacity: 0.8;
+        }
+
+        .card.completed::after {
+            content: '✅ مكتمل';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: var(--success);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .card p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-open {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-open:hover { opacity: 0.9; }
+
+        .btn-check {
+            background-color: transparent;
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+        .btn-check:hover, .card.completed .btn-check {
+            background-color: var(--success);
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎓 منصة تجارة إنجليزي</h1>
+        <button class="theme-btn" onclick="toggleTheme()">🌙 الوضع الليلي</button>
+    </header>
+
+    <div class="progress-section">
+        <h2>تقدمك الدراسي</h2>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBar">0%</div>
+        </div>
+        <p style="margin-top: 10px; color: var(--text-light)" id="progressText">لقد أتممت 0 من 8 مواد</p>
+    </div>
+
+    <div class="grid-container" id="cardsContainer">
+        <!-- سيتم توليد الكروت هنا تلقائياً بواسطة الجافاسكريبت -->
+    </div>
+
+    <script>
+        // ==========================================
+        //  إعدادات المواد (قم بتعديل أسماء الملفات هنا)
+        // ==========================================
+        const subjectsDB = [
+            { 
+                id: 1, 
+                name: "Accounting Information Systems", 
+                file: "AIS.html",  // تأكد أن هذا اسم الملف عندك
+                desc: "نظم المعلومات المحاسبية ومعالجة البيانات."
+            },
+            { 
+                id: 2, 
+                name: "Business English 2nd year", 
+                file: "business_english.html", 
+                desc: "مصطلحات تجارية ومراسلات باللغة الإنجليزية."
+            },
+            { 
+                id: 3, 
+                name: "Intermediate Accounting (2)", 
+                file: "intermediate_acc.html", 
+                desc: "المحاسبة المتوسطة: الالتزامات وحقوق الملكية."
+            },
+            { 
+                id: 4, 
+                name: "Introduction to Political Science", 
+                file: "political_science.html", 
+                desc: "مبادئ العلوم السياسية وأنظمة الحكم."
+            },
+            { 
+                id: 5, 
+                name: "Marketing", 
+                file: "marketing.html", 
+                desc: "مبادئ التسويق واستراتيجيات البيع."
+            },
+            { 
+                id: 6, 
+                name: "Public Finance (2)", 
+                file: "public_finance.html", 
+                desc: "المالية العامة والسياسات الضريبية."
+            },
+            { 
+                id: 7, 
+                name: "Statistical Inference", 
+                file: "statistics.html", 
+                desc: "الاستدلال الإحصائي واختبار الفرضيات."
+            },
+            { 
+                id: 8, 
+                name: "Theory of Microeconomics", 
+                file: "microeconomics.html", 
+                desc: "نظرية الاقتصاد الجزئي وسلوك المستهلك."
+            }
+        ];
+
+        // ==========================================
+        //  الكود البرمجي (المنطق)
+        // ==========================================
+        
+        const container = document.getElementById('cardsContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        // 1. تحميل البيانات عند الفتح
+        function init() {
+            loadTheme();
+            renderCards();
+            updateProgress();
+        }
+
+        // 2. رسم الكروت
+        function renderCards() {
+            container.innerHTML = '';
+            const completedList = getCompleted();
+
+            subjectsDB.forEach(sub => {
+                const isCompleted = completedList.includes(sub.id);
+                
+                const card = document.createElement('div');
+                card.className = `card ${isCompleted ? 'completed' : ''}`;
+                
+                card.innerHTML = `
+                    <h3>${sub.name}</h3>
+                    <p>${sub.desc}</p>
+                    <div class="actions">
+                        <a href="${sub.file}" target="_blank" class="btn btn-open">📖 فتح المادة</a>
+                        <button class="btn btn-check" onclick="toggleStatus(${sub.id})">
+                            ${isCompleted ? 'تراجع' : 'تمت المذاكرة'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 3. التعامل مع زر "تمت المذاكرة"
+        function toggleStatus(id) {
+            let list = getCompleted();
+            if (list.includes(id)) {
+                list = list.filter(item => item !== id); // حذف
+            } else {
+                list.push(id); // إضافة
+            }
+            localStorage.setItem('commerce_progress', JSON.stringify(list));
+            renderCards();
+            updateProgress();
+        }
+
+        // 4. حساب شريط التقدم
+        function updateProgress() {
+            const total = subjectsDB.length;
+            const completed = getCompleted().length;
+            const percentage = Math.round((completed / total) * 100);
+
+            progressBar.style.width = `${percentage}%`;
+            progressBar.innerText = `${percentage}%`;
+            progressText.innerText = `لقد أتممت ${completed} من ${total} مواد`;
+        }
+
+        // جلب القائمة من التخزين المحلي
+        function getCompleted() {
+            return JSON.parse(localStorage.getItem('commerce_progress')) || [];
+        }
+
+        // 5. الوضع الليلي
+        function toggleTheme() {
+            const body = document.body;
+            const current = body.getAttribute('data-theme');
+            const newTheme = current === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem('theme');
+            if (saved) document.body.setAttribute('data-theme', saved);
+        }
+
+        // تشغيل المنصة
+        init();
+    </script>
+</body>
+</html>
