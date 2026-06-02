@@ -1027,6 +1027,14 @@
         .path-wealth .skill-line.active { background: linear-gradient(90deg, #334155, #facc15); box-shadow: 0 0 8px #facc15; }
         .path-wisdom .skill-line.active { background: linear-gradient(90deg, #334155, #38bdf8); box-shadow: 0 0 8px #38bdf8; }
         .path-warrior .skill-line.active { background: linear-gradient(90deg, #334155, #ef4444); box-shadow: 0 0 8px #ef4444; }
+
+        /* 👑 الإذاعة الإمبراطورية (Imperial Broadcast) 👑 */
+        @keyframes imperialMarquee { 0% { transform: translateX(-100%); } 100% { transform: translateX(150%); } }
+        .imperial-banner { position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateY(-20px); width: 92%; max-width: 450px; height: 32px; background: linear-gradient(90deg, transparent, rgba(36,28,0,0.95), rgba(250,204,21,0.25), rgba(36,28,0,0.95), transparent); border-top: 1px solid rgba(250,204,21,0.5); border-bottom: 1px solid rgba(250,204,21,0.5); z-index: 9999999; display: flex; align-items: center; justify-content: space-between; overflow: hidden; opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); filter: drop-shadow(0 5px 15px rgba(250,204,21,0.6)); }
+        .imperial-banner.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .imperial-ornament { color: #facc15; font-size: 14px; flex-shrink: 0; z-index: 10; text-shadow: 0 0 10px #facc15; padding: 0 8px; }
+        .imperial-marquee-wrapper { flex: 1; overflow: hidden; white-space: nowrap; position: relative; display: flex; align-items: center; height: 100%; mask-image: linear-gradient(90deg, transparent 0%, black 15%, black 85%, transparent 100%); -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 15%, black 85%, transparent 100%); }
+        .imperial-marquee-text { display: inline-block; font-family: 'Cairo', sans-serif; font-weight: 900; font-size: 12px; color: #fff; text-shadow: 1px 1px 2px #000, 0 0 8px rgba(250,204,21,0.6); animation: imperialMarquee 15s linear infinite; }
     </style>
 </head>
 <body>
@@ -1952,8 +1960,11 @@
                     </div>
                     
                     <div class="flex gap-2 items-center justify-between border-t border-slate-700 pt-2 mt-1">
-                        <label class="cursor-pointer flex items-center gap-1.5 text-[10px] text-indigo-300 font-bold bg-indigo-900 px-2 py-1 rounded hover:bg-indigo-800 transition-colors"><input type="checkbox" id="task-sequential" class="holo-checkbox w-4 h-4 text-indigo-400 clickable-safe"> <span>ارتباط تسلسلي</span></label>
-                        <button id="btn-add-task" class="btn btn-sm bg-indigo-600 hover:bg-indigo-500 text-white border-none clickable-safe px-6 rounded-lg font-black tracking-wider"><i class="fa-solid fa-plus"></i> حقن البيانات</button>
+                        <div class="flex gap-2 items-center">
+                            <label class="cursor-pointer flex items-center gap-1.5 text-[10px] text-indigo-300 font-bold bg-indigo-900 px-2 py-1 rounded hover:bg-indigo-800 transition-colors"><input type="checkbox" id="task-sequential" class="holo-checkbox w-4 h-4 text-indigo-400 clickable-safe"> <span>تسلسلي</span></label>
+                            <button data-feature-id="feat_recurring_tasks" data-feature-type="click" id="btn-task-repeat" class="text-[10px] text-emerald-300 font-bold bg-emerald-900/50 px-2 py-1 rounded hover:bg-emerald-800 transition-colors border border-emerald-500/30 clickable-safe relative" onclick="openRepeatModal()"><i class="fa-solid fa-rotate"></i> <span id="repeat-btn-text">تكرار</span></button>
+                        </div>
+                        <button id="btn-add-task" class="btn btn-sm bg-indigo-600 hover:bg-indigo-500 text-white border-none clickable-safe px-4 rounded-lg font-black tracking-wider"><i class="fa-solid fa-plus"></i> حقن</button>
                     </div>
                 </div>
 
@@ -2835,6 +2846,10 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 px-2 pb-10">
+                    <button data-feature-id="feat_comp_announcements_v67" data-feature-type="click" class="g-dash-btn clickable-safe col-span-2 relative" style="--btn-c: #eab308;" onclick="switchCompTab('announcements'); renderAnnouncements();">
+                        <div class="absolute top-0 right-0 bg-yellow-600 text-white text-[8px] font-black px-2 py-0.5 rounded-bl-lg shadow-[0_0_10px_#eab308] animate-pulse">جديد 🔥</div>
+                        <i class="fa-solid fa-bullhorn"></i><span class="text-base">إعلانات السيرفر</span>
+                    </button>
                     <button data-feature-id="feat_comp_leaderboard_v49" data-feature-type="click" class="g-dash-btn clickable-safe" style="--btn-c: #facc15;" onclick="switchCompTab('leaderboard')">
                         <i class="fa-solid fa-trophy"></i><span class="text-base">لوحة الصدارة</span>
                     </button>
@@ -2862,6 +2877,9 @@
                 <h2 id="comp-viewer-title" class="text-xl font-black text-white m-0"></h2>
             </div>
             
+            <!-- حاوية إعلانات السيرفر (الجديدة) -->
+            <div id="comp-announcements-container" class="hidden relative z-10 mx-1 pb-10"></div>
+
             <!-- 🛡️ حاوية التحالفات الأكاديمية 🛡️ -->
             <div id="comp-guilds-container" class="hidden relative z-10 mx-1 pb-10">
                 <div id="guild-unjoined-container" class="hidden">
@@ -3330,26 +3348,36 @@
         // ==========================================
         let currentNotifFilter = 'all';
 
-        // دالة عرض الإشعار المنبثق الحي (Live Toast)
-        window.showLiveToast = (title, desc, icon, colorHex, actionCmd, actionText, isAvatar = false) => {
+        // نظام طابور الإشعارات المنبثقة الحية (Live Toast Queue System)
+        window.liveToastQueue = [];
+        window.isLiveToastActive = false;
+
+        window.processLiveToastQueue = () => {
+            if (window.isLiveToastActive || window.liveToastQueue.length === 0) return;
+            window.isLiveToastActive = true;
+            
+            const toastData = window.liveToastQueue.shift();
             const container = document.getElementById('global-toast-container');
-            if(!container) return;
+            if(!container) {
+                window.isLiveToastActive = false;
+                return window.processLiveToastQueue();
+            }
 
             const toastId = 'toast_' + Date.now();
-            const actionHtml = actionCmd ? `<button class="mt-2 w-full bg-black/40 hover:bg-black/60 border border-white/10 text-[10px] font-black text-white py-1 rounded-lg transition-colors pointer-events-auto clickable-safe" onclick="${actionCmd}; document.getElementById('${toastId}').remove(); playSound('click');">${actionText}</button>` : '';
+            const actionHtml = toastData.actionCmd ? `<button class="mt-2 w-full bg-black/40 hover:bg-black/60 border border-white/10 text-[10px] font-black text-white py-1 rounded-lg transition-colors pointer-events-auto clickable-safe" onclick="${toastData.actionCmd}; document.getElementById('${toastId}').remove(); window.isLiveToastActive = false; window.processLiveToastQueue(); playSound('click');">${toastData.actionText}</button>` : '';
             
-            const iconHtml = isAvatar ? `<img src="${icon}" class="w-8 h-8 rounded-full border-2 border-white/20">` : `<i class="fa-solid ${icon} text-xl" style="color: ${colorHex}"></i>`;
+            const iconHtml = toastData.isAvatar ? `<img src="${toastData.icon}" class="w-8 h-8 rounded-full border-2 border-white/20">` : `<i class="fa-solid ${toastData.icon} text-xl" style="color: ${toastData.colorHex}"></i>`;
 
             const toastHTML = `
-                <div id="${toastId}" class="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl relative overflow-hidden transform transition-all duration-500 translate-y-[-150%] opacity-0 pointer-events-none" style="box-shadow: 0 10px 30px ${colorHex}30, inset 0 0 10px ${colorHex}10; border-right: 4px solid ${colorHex};">
-                    <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-transparent to-white/50" style="background-color: ${colorHex}; width: 100%; animation: toastProgress 5s linear forwards;"></div>
+                <div id="${toastId}" class="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl relative overflow-hidden transform transition-all duration-500 translate-y-[-150%] opacity-0 pointer-events-none" style="box-shadow: 0 10px 30px ${toastData.colorHex}30, inset 0 0 10px ${toastData.colorHex}10; border-right: 4px solid ${toastData.colorHex};">
+                    <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-transparent to-white/50" style="background-color: ${toastData.colorHex}; width: 100%; animation: toastProgress 5s linear forwards;"></div>
                     <div class="flex items-start gap-3">
                         <div class="w-10 h-10 rounded-xl bg-black/50 flex items-center justify-center shrink-0 border border-white/5 shadow-inner">
                             ${iconHtml}
                         </div>
                         <div class="flex-1">
-                            <h4 class="text-xs font-black text-white mb-0.5 pointer-events-auto" onclick="document.getElementById('${toastId}').remove(); playSound('click');">${title}</h4>
-                            <p class="text-[10px] text-gray-200 leading-tight font-bold pointer-events-auto" onclick="document.getElementById('${toastId}').remove(); playSound('click');">${desc}</p>
+                            <h4 class="text-xs font-black text-white mb-0.5 pointer-events-auto cursor-pointer" onclick="document.getElementById('${toastId}').remove(); window.isLiveToastActive = false; window.processLiveToastQueue(); playSound('click');">${toastData.title}</h4>
+                            <p class="text-[10px] text-gray-200 leading-tight font-bold pointer-events-auto cursor-pointer" onclick="document.getElementById('${toastId}').remove(); window.isLiveToastActive = false; window.processLiveToastQueue(); playSound('click');">${toastData.desc}</p>
                             ${actionHtml}
                         </div>
                     </div>
@@ -3361,16 +3389,29 @@
             
             // Animation In
             setTimeout(() => {
-                toastEl.classList.remove('translate-y-[-150%]', 'opacity-0');
+                if(toastEl) toastEl.classList.remove('translate-y-[-150%]', 'opacity-0');
             }, 10);
 
-            // Animation Out & Remove
+            // Animation Out & Remove & Trigger Next
             setTimeout(() => {
                 if(document.getElementById(toastId)) {
                     toastEl.classList.add('opacity-0', 'translate-x-[100%]');
-                    setTimeout(() => { if(document.getElementById(toastId)) toastEl.remove(); }, 500);
+                    setTimeout(() => { 
+                        if(document.getElementById(toastId)) toastEl.remove(); 
+                        window.isLiveToastActive = false;
+                        window.processLiveToastQueue();
+                    }, 500);
+                } else {
+                    window.isLiveToastActive = false;
+                    window.processLiveToastQueue();
                 }
             }, 5000);
+        };
+
+        // دالة عرض الإشعار المنبثق الحي (Live Toast) المعدلة
+        window.showLiveToast = (title, desc, icon, colorHex, actionCmd, actionText, isAvatar = false) => {
+            window.liveToastQueue.push({title, desc, icon, colorHex, actionCmd, actionText, isAvatar});
+            window.processLiveToastQueue();
         };
 
         // إضافة ستايل حركة الشريط للإشعارات
@@ -3765,7 +3806,76 @@
         };
         
         // V1.3 Anti-Cheat & Robust Migrations (NaN Preventer)
+        // متغير يحدد إذا كان التطبيق قد أنهى شاشة التحميل (لمنع زحام الإعلانات)
+        window.isAppFullyLoaded = false;
+
         if(!appData.skillTree) appData.skillTree = { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 };
+        if(!appData.luckyWheel) appData.luckyWheel = { dateKey: "", items: [] }; 
+        if(!appData.dailyAnnouncements) appData.dailyAnnouncements = { date: dayjs().format('YYYY-MM-DD'), logs: [] }; // تعديل ليحفظ الداتا والسجل
+        if(!appData.dailyAnnouncements.logs) appData.dailyAnnouncements.logs = [];
+
+        // --- 👑 محرك الإذاعة الإمبراطورية (Imperial Broadcast Engine) 👑 ---
+        window.showImperialBroadcast = (message, eventId) => {
+            if(!appData.dailyAnnouncements) appData.dailyAnnouncements = { date: dayjs().format('YYYY-MM-DD'), logs: [] };
+            
+            // 1. تسجيل الإنجاز في قسم الإعلانات (سواء التطبيق مفتوح أو محاكاة غياب)
+            if (!appData.dailyAnnouncements.logs.some(l => l.id === eventId)) {
+                appData.dailyAnnouncements.logs.push({
+                    id: eventId,
+                    text: message,
+                    timestamp: Date.now()
+                });
+                saveState();
+            }
+
+            // 2. إظهار الشريط العائم (فقط إذا كان المستخدم داخل التطبيق والشاشة محملة بالكامل)
+            if (window.isAppFullyLoaded && document.visibilityState === 'visible') {
+                let container = document.getElementById('imperial-broadcast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'imperial-broadcast-container';
+                    container.className = 'imperial-banner';
+                    container.innerHTML = `
+                        <div class="imperial-ornament"><i class="fa-solid fa-ranking-star"></i></div>
+                        <div class="imperial-marquee-wrapper" dir="rtl">
+                            <span class="imperial-marquee-text" id="imperial-broadcast-text"></span>
+                        </div>
+                        <div class="imperial-ornament"><i class="fa-solid fa-ranking-star"></i></div>
+                    `;
+                    document.body.appendChild(container); // يتم إرفاقه بـ body ليظهر في جميع الأقسام
+                }
+                
+                document.getElementById('imperial-broadcast-text').innerHTML = message;
+                container.classList.add('show');
+                playSound('success'); 
+                
+                // إخفاء الشريط بعد 15 ثانية (دورة أنيميشن كاملة)
+                setTimeout(() => {
+                    container.classList.remove('show');
+                }, 15000);
+            }
+        };
+
+        // دالة توليد عناصر عجلة الحظ يومياً الساعة 11 مساءً
+        window.generateLuckyWheelItems = () => {
+            let now = dayjs();
+            // اليوم بالنسبة لعجلة الحظ يتغير الساعة 23:00 (11 مساءً)
+            let shiftDate = now.hour() >= 23 ? now.add(1, 'day').format('YYYY-MM-DD') : now.format('YYYY-MM-DD');
+
+            if (appData.luckyWheel.dateKey !== shiftDate || appData.luckyWheel.items.length !== 2) {
+                // فلترة المستهلكات המفتوحة للاعب (غير الأسطورية لضمان توازن اللعبة)
+                let available = STORE_CATALOG.consumables.filter(i => (!i.reqLevel || appData.level >= i.reqLevel) && !i.isLegendary);
+                if (available.length < 2) available = STORE_CATALOG.consumables.filter(i => !i.isLegendary); // تأمين ضد الأخطاء
+                
+                let shuffled = available.sort(() => 0.5 - Math.random());
+                appData.luckyWheel = {
+                    dateKey: shiftDate,
+                    items: [shuffled[0].id, shuffled[1].id]
+                };
+                saveState();
+            }
+        };
+
         // تعويض اللاعبين ذوي المستوى المرتفع بنقاط المهارة التي فاتتهم بأثر رجعي
         let expectedSP = Math.max(0, appData.level - 1);
         if((appData.skillTree.points + appData.skillTree.spent) < expectedSP) {
@@ -3819,6 +3929,7 @@
         if(!appData.subjectHistory) appData.subjectHistory = {};
         if(!appData.subjectAIAnalysis) appData.subjectAIAnalysis = { lastUpdate: "", data: {} };
         if(!appData.flashQuests) appData.flashQuests = { date: "", quests: [] }; // نظام المهام السرية
+        if(!appData.recurringTasks) appData.recurringTasks = []; // قوالب المهام المتكررة
         if(!appData.purchasedShapes) { appData.purchasedShapes = ['octahedron']; appData.activeShape = appData.shape3D || 'octahedron'; }
         if(!appData.purchasedNames) { appData.purchasedNames = ['default']; appData.activeName = 'default'; }
         if(!appData.purchasedHeaders) { appData.purchasedHeaders = ['default']; appData.activeHeader = 'default'; }
@@ -5077,9 +5188,13 @@
             
             if(appData.playtimeRewards.date !== today) {
                 appData.playtimeRewards = { date: today, r60: false, r120: false, r180: false };
+                appData.dailyAnnouncements = { date: today, logs: [] }; // تصفير سجل الإعلانات لليوم الجديد لمنع التهنيج
                 saveState();
             }
             
+            // توليد عجلة الحظ في الخلفية لو محصلش
+            if(typeof generateLuckyWheelItems === 'function') generateLuckyWheelItems();
+
             if(appData.advancedStats.dailyCoinsDate !== today) {
                 runOmniscientAI('daily'); // 🚀 إطلاق محرك الـ AI الجبار في بداية اليوم
                 
@@ -5176,6 +5291,8 @@
             if(!appData.tasksDate || appData.tasksDate !== today) { 
                 appData.tasks = appData.tasks.filter(t => !t.done); // التخلص من المهام المكتملة لبداية يوم نظيف
                 appData.tasksDate = today; 
+                // ضخ قوالب المهام المتكررة لليوم الجديد
+                if(typeof generateRecurringTasks === 'function') generateRecurringTasks();
             }
             
             // VS System Daily/Weekly Shift Logic
@@ -5856,8 +5973,8 @@
 
                 if (elapsedMins <= 0) return;
 
-                // الحد الأقصى للمحاكاة دفعة واحدة لتفادي تجمد المعالج هو 24 ساعة (1440 دقيقة)
-                if (elapsedMins > 1440) elapsedMins = 1440;
+                // الحد الأقصى للمحاكاة دفعة واحدة لتفادي تجمد المعالج هو 3 أيام (4320 دقيقة) بدلاً من تركه يستهلك الموارد
+                if (elapsedMins > 4320) elapsedMins = 4320;
 
                 let skill = parseFloat(bot.skill) || 1;
 
@@ -6555,12 +6672,23 @@
                 }
 
                 // تحديث حالة الاتصال اللحظية والحالة العامة
-                let isNowOnline = getMinsForHour(dayjs(now).hour(), bot.persona, skill, isSeasonEnding) > 5 && !bot.isAtBreak;
-                bot.isOnline = isNowOnline;
-                bot.trendNum = (bot.dailyMins > 0) ? 1 : 0;
+                    let isNowOnline = getMinsForHour(dayjs(now).hour(), bot.persona, skill, isSeasonEnding) > 5 && !bot.isAtBreak;
+                    bot.isOnline = isNowOnline;
+                    bot.trendNum = (bot.dailyMins > 0) ? 1 : 0;
 
-                // تحديث المستويات بانتظام وصرف مكافآت اللفل للبوت
-                let oldLvl = bot.level || 1;
+                    // 👑 الإذاعة الإمبراطورية (Imperial Broadcast): البوت تجاوز 4 ساعات 👑
+                    if (bot.dailyMins >= 240) {
+                        let eventId = `bot_4h_${bot.id}_${dayjs().format('YYYY-MM-DD')}`;
+                        if (appData.dailyAnnouncements && appData.dailyAnnouncements.logs && !appData.dailyAnnouncements.logs.some(l => l.id === eventId)) {
+                            let titleName = bot.title || 'دحيح مرعب';
+                            if(typeof window.showImperialBroadcast === 'function') {
+                                window.showImperialBroadcast(`📢 <span class="text-yellow-400">إعلان السيرفر:</span> الأسطورة [${bot.name}] (${titleName}) حقق إنجاز جنوني بفرم 4 ساعات كاملة اليوم! القمة تشتعل 🔥`, eventId);
+                            }
+                        }
+                    }
+
+                    // تحديث المستويات بانتظام وصرف مكافآت اللفل للبوت
+                    let oldLvl = bot.level || 1;
                 let newLvl = calculateBotLevel(bot.lifetimeXp);
                 if (newLvl > oldLvl) {
                     bot.level = newLvl;
@@ -7343,7 +7471,7 @@
             }
         };
 
-        // التحديث الصامت للخوارزمية كل دقيقة إذا كان المستخدم في شاشة الصدارة فقط (توفير للبطارية)
+        // التحديث الصامت للخوارزمية كل دقيقة 
         setInterval(() => {
             // 🛡️ فحص الطرد من التحالف (Kicked from Guild Logic) 🛡️
             if (appData.kickedFromGuild) {
@@ -7362,13 +7490,7 @@
                 });
             }
 
-            if (document.getElementById('view-leaderboard').classList.contains('active')) {
-                if (currentLeaderboardSubSection === 'dynamic') {
-                    renderLeaderboard();
-                } else if (currentLeaderboardSubSection === 'permanent') {
-                    renderPermanentLeaderboard();
-                }
-            }
+            // تمت إزالة تحديث لوحة الصدارة من هنا لنقلها لـ Interval خاص كل 90 ثانية تعمل دائماً
 
             // 🛡️ المراقبة اللحظية للمحاكمة العسكرية (Mutiny Resolution) 🛡️
             if (appData.guildData && appData.guildData.mutiny && appData.guildData.mutiny.active) {
@@ -7839,6 +7961,8 @@
                 setTimeout(() => { 
                     splash.style.display="none"; 
                     appContainer.style.opacity=1; 
+                    window.isAppFullyLoaded = true; // تفعيل محرك الإذاعة الآن بأمان
+                    
                     if(typeof gsap !== 'undefined') {
                         gsap.from(appContainer, { y: 30, opacity: 0, duration: 0.8, ease: "power3.out" }); 
                     }
@@ -11222,6 +11346,17 @@
                     appData.vsStats.today.mins += (deltaSecs / 60);
                     appData.vsStats.thisWeek.mins += (deltaSecs / 60);
                     
+                    // 👑 الإذاعة الإمبراطورية للمستخدم الفعلي 👑
+                    if (appData.vsStats.today.mins >= 240) {
+                        let eventId = `user_4h_${dayjs().format('YYYY-MM-DD')}`;
+                        if (appData.dailyAnnouncements && appData.dailyAnnouncements.logs && !appData.dailyAnnouncements.logs.some(l => l.id === eventId)) {
+                            let titleName = appData.activeTitle.name || 'الإمبراطور الأعظم';
+                            if(typeof window.showImperialBroadcast === 'function') {
+                                window.showImperialBroadcast(`👑 <span class="text-pink-400">إعلان تاريخي:</span> بطلنا [${appData.userName}] (${titleName}) دمر المنهج وفرم 4 ساعات اليوم! السيرفر يقف احتراماً لك 🫡`, eventId);
+                            }
+                        }
+                    }
+
                     // 🎟️ نظام التذاكر التلقائي (تذكرة لكل 40 دقيقة) 🎟️
                     appData.advancedStats.ticketMinutes += (deltaSecs / 60);
                     if(appData.advancedStats.ticketMinutes >= 40) {
@@ -12937,24 +13072,150 @@
         // TASKS
         window.switchTaskTab = (tab, btn) => { document.querySelectorAll('#view-tasks .tab').forEach(t => { t.classList.remove('tab-active', 'text-white'); t.classList.add('text-gray-400'); }); btn.classList.remove('text-gray-400'); btn.classList.add('tab-active', 'text-white'); document.getElementById('task-view-list').classList.add('hidden'); document.getElementById('task-view-eisen').classList.add('hidden'); document.getElementById('task-view-kanban').classList.add('hidden'); document.getElementById('task-view-timebox').classList.add('hidden'); document.getElementById(`task-view-${tab}`).classList.remove('hidden'); playSound('click'); };
 
-        function initTasks() { renderTasks(); renderLifeTasks(); document.getElementById('btn-add-task').onclick = () => { const input = document.getElementById('task-input'); const prio = document.getElementById('task-priority').value; let pomos = parseInt(document.getElementById('task-pomodoros').value) || 1; if(pomos > 10) pomos = 10; if(pomos < 1) pomos = 1; const seq = document.getElementById('task-sequential').checked; 
-        
-        // 🚧 مانع تراكم المهام (Task Hoarding Preventer) 🚧
-        let pendingTasksCount = appData.tasks.filter(t => !t.done).length;
-        if(pendingTasksCount >= 10) {
+        window.currentTaskRepeat = null; // يحفظ اعدادات التكرار الحالية للمهمة
+
+        window.openRepeatModal = () => {
             playSound('click');
             Swal.fire({
-                title: 'كفاية تراكمات! 🛑',
-                text: 'إنت كاتب 10 مهام ومخلصتهمش! السيستم قافل الإضافة. إما تخلص اللي وراك أو تمسح القديم عشان تنضف دماغك.',
-                icon: 'error',
-                background: '#450a0a', color: '#fff',
-                confirmButtonText: 'حاضر هخلصهم',
-                confirmButtonColor: '#ef4444'
+                title: 'تكرار المهمة (الروتين) 🔁',
+                html: `
+                    <div class="text-right space-y-4 px-2">
+                        <p class="text-[10px] text-gray-400 font-bold mb-2">لو فعلت التكرار، المهمة دي هتنزل أوتوماتيك في قائمة مهامك في الأيام اللي هتحددها.</p>
+                        <select id="repeat-type" class="select select-sm w-full bg-slate-900 text-white border-emerald-500/50 font-bold" onchange="document.getElementById('days-picker').style.display = this.value === 'weekly' ? 'block' : 'none'">
+                            <option value="none" ${!window.currentTaskRepeat ? 'selected' : ''}>بدون تكرار (تضاف مرة واحدة)</option>
+                            <option value="daily" ${window.currentTaskRepeat?.type === 'daily' ? 'selected' : ''}>يومياً (تضاف كل يوم تلقائياً)</option>
+                            <option value="weekly" ${window.currentTaskRepeat?.type === 'weekly' ? 'selected' : ''}>أيام محددة في الأسبوع</option>
+                        </select>
+                        <div id="days-picker" style="display:${window.currentTaskRepeat?.type === 'weekly' ? 'block' : 'none'};" class="bg-black/50 p-3 rounded-lg border border-white/10 mt-3">
+                            <p class="text-[10px] text-emerald-400 font-black mb-3 text-center">اختار الأيام:</p>
+                            <div class="flex gap-2 justify-center flex-wrap flex-row-reverse" dir="ltr">
+                                <label class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer hover:bg-emerald-900 border border-slate-600"><input type="checkbox" class="holo-checkbox w-3.5 h-3.5 day-cb text-emerald-500 clickable-safe" value="6" ${window.currentTaskRepeat?.days?.includes(6)?'checked':''}><span class="text-[10px] text-white">السبت</span></label>
+                                <label class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer hover:bg-emerald-900 border border-slate-600"><input type="checkbox" class="holo-checkbox w-3.5 h-3.5 day-cb text-emerald-500 clickable-safe" value="0" ${window.currentTaskRepeat?.days?.includes(0)?'checked':''}><span class="text-[10px] text-white">الأحد</span></label>
+                                <label class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer hover:bg-emerald-900 border border-slate-600"><input type="checkbox" class="holo-checkbox w-3.5 h-3.5 day-cb text-emerald-500 clickable-safe" value="1" ${window.currentTaskRepeat?.days?.includes(1)?'checked':''}><span class="text-[10px] text-white">الإثنين</span></label>
+                                <label class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer hover:bg-emerald-900 border border-slate-600"><input type="checkbox" class="holo-checkbox w-3.5 h-3.5 day-cb text-emerald-500 clickable-safe" value="2" ${window.currentTaskRepeat?.days?.includes(2)?'checked':''}><span class="text-[10px] text-white">الثلاثاء</span></label>
+                                <label class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer hover:bg-emerald-900 border border-slate-600"><input type="checkbox" class="holo-checkbox w-3.5 h-3.5 day-cb text-emerald-500 clickable-safe" value="3" ${window.currentTaskRepeat?.days?.includes(3)?'checked':''}><span class="text-[10px] text-white">الأربعاء</span></label>
+                                <label class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer hover:bg-emerald-900 border border-slate-600"><input type="checkbox" class="holo-checkbox w-3.5 h-3.5 day-cb text-emerald-500 clickable-safe" value="4" ${window.currentTaskRepeat?.days?.includes(4)?'checked':''}><span class="text-[10px] text-white">الخميس</span></label>
+                                <label class="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded cursor-pointer hover:bg-emerald-900 border border-slate-600"><input type="checkbox" class="holo-checkbox w-3.5 h-3.5 day-cb text-emerald-500 clickable-safe" value="5" ${window.currentTaskRepeat?.days?.includes(5)?'checked':''}><span class="text-[10px] text-white">الجمعة</span></label>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                background: '#0f172a', color: '#fff', showCancelButton: true, confirmButtonText: 'حفظ الإعدادات', cancelButtonText: 'تراجع', confirmButtonColor: '#10b981', customClass: {popup: 'border border-emerald-500/30 rounded-3xl'}
+            }).then(r => {
+                if(r.isConfirmed) {
+                    let type = document.getElementById('repeat-type').value;
+                    let btnText = document.getElementById('repeat-btn-text');
+                    let btnOuter = document.getElementById('btn-task-repeat');
+                    
+                    if (type === 'none') {
+                        window.currentTaskRepeat = null;
+                        btnText.innerText = "بدون تكرار";
+                        btnOuter.classList.replace('bg-emerald-600', 'bg-emerald-900/50');
+                    } else if (type === 'daily') {
+                        window.currentTaskRepeat = { type: 'daily' };
+                        btnText.innerText = "تكرار يومي";
+                        btnOuter.classList.replace('bg-emerald-900/50', 'bg-emerald-600');
+                    } else if (type === 'weekly') {
+                        let selectedDays = Array.from(document.querySelectorAll('.day-cb:checked')).map(cb => parseInt(cb.value));
+                        if(selectedDays.length === 0) {
+                            Swal.fire({toast:true, position:'top', title:'مخترتش أيام! لغينا التكرار.', icon:'warning', showConfirmButton:false, timer:3000, background:'#450a0a', color:'#fff'});
+                            window.currentTaskRepeat = null;
+                            btnText.innerText = "بدون تكرار";
+                            btnOuter.classList.replace('bg-emerald-600', 'bg-emerald-900/50');
+                        } else {
+                            window.currentTaskRepeat = { type: 'weekly', days: selectedDays };
+                            btnText.innerText = "تكرار أسبوعي";
+                            btnOuter.classList.replace('bg-emerald-900/50', 'bg-emerald-600');
+                        }
+                    }
+                    playSound('success');
+                }
             });
-            return;
-        }
+        };
 
-        if(input.value.trim() !== "") { appData.tasks.push({ id: Date.now(), text: escapeHTML(input.value), done: false, priority: prio, pomodoros: parseInt(pomos), sequential: seq, status: 'todo', actPomos: 0 }); appData.advancedStats.tasksCreated++; appData.estimationStats.est += parseInt(pomos); input.value = ""; document.getElementById('task-pomodoros').value = 1; saveState(); renderTasks(); updateAllAppUI(); playSound('click');}}; }
+        window.generateRecurringTasks = () => {
+            if (!appData.recurringTasks || appData.recurringTasks.length === 0) return;
+            let todayDay = dayjs().day(); // 0 is Sunday, 6 is Saturday
+            let addedCount = 0;
+
+            appData.recurringTasks.forEach(rt => {
+                let shouldAdd = false;
+                if (rt.type === 'daily') shouldAdd = true;
+                else if (rt.type === 'weekly' && rt.days && rt.days.includes(todayDay)) shouldAdd = true;
+
+                if (shouldAdd) {
+                    // التحقق لعدم تكرار نفس المهمة مرتين اليوم
+                    let alreadyExists = appData.tasks.some(t => t.text === rt.text && !t.done);
+                    if (!alreadyExists) {
+                        appData.tasks.push({
+                            id: Date.now() + Math.random(),
+                            text: rt.text,
+                            done: false,
+                            priority: rt.priority,
+                            pomodoros: rt.pomodoros,
+                            sequential: rt.sequential,
+                            status: 'todo',
+                            actPomos: 0
+                        });
+                        appData.advancedStats.tasksCreated++;
+                        appData.estimationStats.est += rt.pomodoros;
+                        addedCount++;
+                    }
+                }
+            });
+            if (addedCount > 0) saveState();
+        };
+
+        function initTasks() { 
+            renderTasks(); renderLifeTasks(); 
+            document.getElementById('btn-add-task').onclick = () => { 
+                const input = document.getElementById('task-input'); 
+                const prio = document.getElementById('task-priority').value; 
+                let pomos = parseInt(document.getElementById('task-pomodoros').value) || 1; 
+                if(pomos > 10) pomos = 10; if(pomos < 1) pomos = 1; 
+                const seq = document.getElementById('task-sequential').checked; 
+            
+                // 🚧 مانع تراكم المهام (Task Hoarding Preventer) 🚧
+                let pendingTasksCount = appData.tasks.filter(t => !t.done).length;
+                if(pendingTasksCount >= 10) {
+                    playSound('click');
+                    Swal.fire({
+                        title: 'كفاية تراكمات! 🛑',
+                        text: 'إنت كاتب 10 مهام ومخلصتهمش! السيستم قافل الإضافة. إما تخلص اللي وراك أو تمسح القديم عشان تنضف دماغك.',
+                        icon: 'error',
+                        background: '#450a0a', color: '#fff',
+                        confirmButtonText: 'حاضر هخلصهم',
+                        confirmButtonColor: '#ef4444'
+                    });
+                    return;
+                }
+
+                if(input.value.trim() !== "") { 
+                    let taskText = escapeHTML(input.value);
+                    appData.tasks.push({ id: Date.now(), text: taskText, done: false, priority: prio, pomodoros: parseInt(pomos), sequential: seq, status: 'todo', actPomos: 0 }); 
+                    appData.advancedStats.tasksCreated++; 
+                    appData.estimationStats.est += parseInt(pomos); 
+                    
+                    // إضافة إلى القوالب المتكررة إذا كان اليوزر مفعل التكرار
+                    if (window.currentTaskRepeat) {
+                        appData.recurringTasks.push({
+                            id: Date.now() + Math.random(),
+                            text: taskText,
+                            priority: prio,
+                            pomodoros: parseInt(pomos),
+                            sequential: seq,
+                            type: window.currentTaskRepeat.type,
+                            days: window.currentTaskRepeat.days || []
+                        });
+                        Swal.fire({toast:true, position:'top', title:'تم الحفظ كروتين دائم 🔄', icon:'success', showConfirmButton:false, timer:3000, background:'#1e293b', color:'#10b981'});
+                    }
+
+                    input.value = ""; 
+                    document.getElementById('task-pomodoros').value = 1; 
+                    saveState(); renderTasks(); updateAllAppUI(); playSound('click');
+                }
+            }; 
+        }
         window.toggleSortTasks = () => { appData.sortTasksAuto = !appData.sortTasksAuto; saveState(); const btn = document.getElementById('btn-sort-tasks'); if(appData.sortTasksAuto) { btn.classList.replace('btn-outline', 'bg-violet-600'); btn.classList.replace('text-violet-400', 'text-white'); } else { btn.classList.replace('bg-violet-600', 'btn-outline'); btn.classList.replace('text-white', 'text-violet-400'); } renderTasks(); playSound('click'); };
 
         function renderTasks() { 
@@ -12980,14 +13241,14 @@
                 
                 const taskHTML = `
                     <div class="${cardClass}">
-                        <div class="flex items-center gap-3 w-[85%] relative">
-                            <div class="relative">
+                        <div class="flex items-center gap-3 w-[85%] relative overflow-hidden">
+                            <div class="relative shrink-0">
                                 <input type="checkbox" class="holo-checkbox clickable-safe" ${t.done?'checked':''} ${disabledCheck?'disabled':''} onchange="toggleTask(${t.id})">
                                 ${seqWarn}
                             </div>
-                            <span class="text-sm font-bold text-white task-text truncate block w-full" title="${t.text}">${t.text}</span>
+                            <div class="w-full overflow-x-auto hide-scrollbar pb-1"><span class="text-xs font-bold text-white task-text whitespace-nowrap block w-max min-w-full" title="${t.text}">${t.text}</span></div>
                         </div>
-                        <div class="flex flex-col items-end justify-center gap-1">
+                        <div class="flex flex-col items-end justify-center gap-1 shrink-0">
                             <div class="bg-black/60 px-1.5 py-0.5 rounded text-[8px] font-black tracking-widest text-gray-300 border border-white/5 flex items-center gap-1">
                                 <i class="fa-solid fa-stopwatch text-[7px] ${t.priority==='high'?'text-red-400':t.priority==='med'?'text-yellow-400':'text-blue-400'}"></i> ${t.pomodoros}
                             </div>
@@ -13007,7 +13268,7 @@
                 const kanbanHTML = `
                     <div class="bg-black/40 border border-current p-2.5 rounded-xl text-xs text-white mb-2 relative transition-transform overflow-hidden group">
                         <div class="absolute inset-0 bg-gradient-to-b from-current to-transparent opacity-[0.03] pointer-events-none"></div>
-                        <p class="font-bold mb-3 relative z-10 w-full truncate">${t.text}</p>
+                        <div class="w-full overflow-x-auto hide-scrollbar pb-1 mb-2"><p class="font-bold relative z-10 w-max min-w-full whitespace-nowrap text-[10px]">${t.text}</p></div>
                         <div class="flex justify-between items-center relative z-10 bg-black/40 p-1 rounded-lg border border-white/5">
                             ${t.status!=='todo'?`<button class="text-[9px] font-black text-slate-400 hover:text-white clickable-safe px-2 py-1 bg-slate-800/50 rounded transition-colors" onclick="moveKanban(${t.id}, 'todo')"><i class="fa-solid fa-backward"></i></button>`:'<span class="w-6"></span>'}
                             ${t.status!=='doing'?`<button class="text-[9px] font-black text-blue-400 hover:text-white clickable-safe px-2 py-1 bg-blue-900/30 rounded border border-blue-500/20 transition-colors" onclick="moveKanban(${t.id}, 'doing')">معالجة <i class="fa-solid fa-microchip"></i></button>`:'<span class="text-[9px] text-blue-300 font-bold animate-pulse">جاري...</span>'}
@@ -14192,7 +14453,7 @@
         // 2- إضافة بطاقات التحديث الجديدة في أعلى مصفوفة UPDATES_HISTORY.
         
         
-const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
+const CURRENT_UPDATE_ID = "V67.0_ANNOUNCEMENTS_HUB";
 
         const UPDATE_COLORS = {
             emerald: { bg: 'bg-emerald-950/40', border: 'border-emerald-500', text: 'text-emerald-400', badge: 'bg-emerald-600' },
@@ -14206,8 +14467,40 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
 
         const UPDATES_HISTORY = [
             {
-                version: "V63.0",
+                version: "V67.0",
                 date: "الآن",
+                title: "مركز الإعلانات وضبط الأداء 🌍",
+                desc: "1- <b>قسم الإعلانات:</b> ضفنا قسم جديد في كوكب الدحيحة (العالم) بيحفظ كل أخبار السيرفر والإنجازات اللي حصلت النهاردة عشان تتابعها في أي وقت.<br>2- <b>حماية الذاكرة:</b> سجل الإعلانات بيتمسح أوتوماتيك كل يوم الساعة 12 بليل عشان الداتابيز متهنجش.<br>3- <b>ذكاء الشريط:</b> شريط الإذاعة بقى بيظهرلك في أي قسم إنت فيه، واتجاه الكلام اتظبط مع العربي (من الشمال لليمين)، ومبقاش يظهر غير وإنت فاتح التطبيق (عشان ميجيبلكش شلل لما تفتح بعد غياب طويل).",
+                icon: "fa-bullhorn",
+                color: "emerald"
+            },
+            {
+                version: "V66.0",
+                date: "سابقاً",
+                title: "الإذاعة الإمبراطورية وعجلة الحظ المتغيرة 👑",
+                desc: "1- <b>شريط الإذاعة:</b> شريط ذهبي فخم هيظهر فوق الهيدر ويعمل إعلان للسيرفر كله لو فيه حد حقق إنجاز جبار (زي مذاكرة 4 ساعات في يوم واحد!).<br>2- <b>عجلة الحظ الذكية:</b> الجوايز اللي في عجلة الحظ مابقتش ثابتة. دلوقتي كل يوم الساعة 11 بالليل السيستم هيختار قدرتين سريتين من المتجر يحطهم في العجلة عشان ينوعلك الجوايز.",
+                icon: "fa-bullhorn",
+                color: "yellow"
+            },
+            {
+                version: "V65.0",
+                date: "سابقاً",
+                title: "قوالب المهام المتكررة (الروتين) 🔄",
+                desc: "1- <b>المهام الآلية:</b> تقدر دلوقتي وانت بتكتب مهمة إنك تفعل زرار (التكرار) عشان تخلي المهمة تنزل لوحدها (يومياً) أو في أيام معينة في الأسبوع من غير ما تكتبها تاني.<br>2- <b>إصلاح المهام الطويلة:</b> صلحنا مشكلة خروج النص الطويل للمهام بره الشاشة. النص دلوقتي بيصغر وتقدر تعمله سكرول يمين وشمال لو طويل جداً بصباعك.",
+                icon: "fa-rotate",
+                color: "emerald"
+            },
+            {
+                version: "V64.0",
+                date: "سابقاً",
+                title: "طابور الإشعارات والأداء السلس 🚀",
+                desc: "1- <b>طابور الإشعارات:</b> الإشعارات بقت بتظهر واحد ورا التاني بانتظام عشان متزحمش الشاشة.<br>2- <b>تحديث الصدارة لايف:</b> لوحة الصدارة بقت بتتحدث كل دقيقة ونص سواء إنت جواها أو براها.<br>3- <b>أداء أسرع بعد الغياب:</b> حطينا حد للعمليات اللي بتحصل وإنت غايب (3 أيام كحد أقصى) عشان التطبيق يفتح طلقة وميهنجش معاك.",
+                icon: "fa-rocket",
+                color: "cyan"
+            },
+            {
+                version: "V63.0",
+                date: "سابقاً",
                 title: "شجرة المهارات الأسطورية 🌳✨",
                 desc: "1- <b>شجرة مهارات الـ RPG:</b> ضفنا شجرة مهارات بـ 3 مسارات (الثراء، الحكمة، المحارب). كل ما الليفل بتاعك يعلى هتاخد نقطة مهارة (SP) تطور بيها قدراتك الدائمة!<br>2- <b>مسار الثراء:</b> هيزودلك الكوينز اللي بتكسبها، هيديك خصومات دايمة في المتجر، وفرصة 30% لصندوق مجاني كل يوم.<br>3- <b>مسار الحكمة:</b> هيزود الـ XP، ويديك بونص ضخم لو الجلسة عدت 60 دقيقة، وهيحميك من كسر الستريك مرة كل شهر مجاناً.<br>4- <b>مسار المحارب:</b> لو طلعت الأول ع السيرفر هتاخد 5 صناديق حظ، وشعار ناري جنب اسمك يرعب المنافسين.<br>5- <b>زر إعادة التعيين:</b> لو حبيت تغير الخطة، تقدر تصفر الشجرة وتسترجع نقطك مقابل 1000 كوين كضريبة.",
                 icon: "fa-sitemap",
@@ -15287,6 +15580,20 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
         let tktItem = appData.inventory.find(i => i.id === 'item_ticket');
         document.getElementById('lw-ticket-count').innerText = tktItem ? tktItem.quantity : 0;
         
+        // التأكد من توليد أو جلب عناصر العجلة لليوم
+        if(typeof generateLuckyWheelItems === 'function') generateLuckyWheelItems();
+        
+        // رسم العجلة بالعناصر الديناميكية الجديدة
+        let item1 = getItemById(appData.luckyWheel.items[0]) || { name: 'جرعة Double XP', icon: 'fa-flask', color: 'text-pink-400' };
+        let item2 = getItemById(appData.luckyWheel.items[1]) || { name: 'ساعة ذهبية', icon: 'fa-hourglass-half', color: 'text-yellow-500' };
+        
+        document.getElementById('lw-wheel').innerHTML = `
+            <div class="wheel-segment"><div class="wheel-content"><i class="fa-solid fa-coins text-yellow-400"></i><span>10 كوينز</span></div></div>
+            <div class="wheel-segment"><div class="wheel-content"><i class="fa-solid ${item1.icon} ${item1.color}"></i><span>${item1.name}</span></div></div>
+            <div class="wheel-segment"><div class="wheel-content"><i class="fa-solid fa-sack-dollar text-yellow-500"></i><span>20 كوينز</span></div></div>
+            <div class="wheel-segment"><div class="wheel-content"><i class="fa-solid ${item2.icon} ${item2.color}"></i><span>${item2.name}</span></div></div>
+        `;
+
         // Reset wheel
         const wheel = document.getElementById('lw-wheel');
         wheel.style.transition = 'none';
@@ -15314,12 +15621,15 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
         if(appData.inventory[tktIdx].quantity <= 0) appData.inventory.splice(tktIdx, 1);
         document.getElementById('lw-ticket-count').innerText = appData.inventory.findIndex(i => i.id === 'item_ticket') > -1 ? appData.inventory.find(i => i.id === 'item_ticket').quantity : 0;
         
-        // 🎯 خوارزمية تحديد الزوايا الصحيحة المعدلة (تطابق 100% مع الـ CSS) 🎯
+        // 🎯 الجوائز الديناميكية المربوطة بما تم اختياره اليوم 🎯
+        let id1 = appData.luckyWheel.items[0];
+        let id2 = appData.luckyWheel.items[1];
+
         const prizes = [
             { id: 'prize_10_coins', name: '10 كوينز 🪙', type: 'coin', val: 10, targetRotation: 45 },           
-            { id: 'prize_double_xp', name: 'جرعة Double XP 🧪', type: 'item', itemId: 'pot_double_xp', targetRotation: 315 }, 
+            { id: `prize_${id1}`, name: getItemById(id1)?.name + ' 🎁' || 'جائزة سرية', type: 'item', itemId: id1, targetRotation: 315 }, 
             { id: 'prize_20_coins', name: '20 كوينز 💰', type: 'coin', val: 20, targetRotation: 225 },          
-            { id: 'prize_golden_hour', name: 'ساعة ذهبية ⏳', type: 'item', itemId: 'item_golden_hour', targetRotation: 135 } 
+            { id: `prize_${id2}`, name: getItemById(id2)?.name + ' 🎁' || 'جائزة سرية', type: 'item', itemId: id2, targetRotation: 135 } 
         ];
 
         // اختيار الجائزة عشوائياً بالنسبة المئوية
@@ -15370,7 +15680,7 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
                 title: 'مبروك يا بطل! 🎊',
                 html: `<div class="text-center mt-2 glass-card p-4 border-2 border-yellow-500 shadow-[0_0_20px_rgba(250,204,21,0.5)]">
                         <p class="text-lg text-white mb-2">عجلة الحظ استقرت على:</p>
-                        <p class="text-2xl text-yellow-400 font-black mt-2 drop-shadow-md">${selectedPrize.name}</p>
+                        <p class="text-xl text-yellow-400 font-black mt-2 drop-shadow-md">${selectedPrize.name}</p>
                        </div>`,
                 background: '#0f172a', color: '#fff', confirmButtonText: 'عظمة', confirmButtonColor: '#8b5cf6'
             });
@@ -15893,12 +16203,14 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
             const barterCont = document.getElementById('comp-barter-container');
             const pulseCont = document.getElementById('comp-pulse-container');
             const guildCont = document.getElementById('comp-guilds-container');
+            const annCont = document.getElementById('comp-announcements-container');
             
             // إخفاء كل الأقسام الفرعية أولاً
             lbCont.classList.add('hidden');
             barterCont.classList.add('hidden');
             pulseCont.classList.add('hidden');
             if(guildCont) guildCont.classList.add('hidden');
+            if(annCont) annCont.classList.add('hidden');
             
             // العودة للداشبورد الرئيسية للعالم
             if(tab === 'overview') {
@@ -15921,7 +16233,8 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
                 leaderboard: '<i class="fa-solid fa-trophy text-yellow-400 mr-2"></i> لوحة الصدارة',
                 barter: '<i class="fa-solid fa-hand-holding-hand text-emerald-400 mr-2"></i> سوق المقايضة',
                 pulse: '<i class="fa-solid fa-heart-pulse text-red-500 mr-2 animate-pulse"></i> النبض العالمي',
-                guilds: '<i class="fa-solid fa-shield-cat text-fuchsia-500 mr-2"></i> التحالفات'
+                guilds: '<i class="fa-solid fa-shield-cat text-fuchsia-500 mr-2"></i> التحالفات',
+                announcements: '<i class="fa-solid fa-bullhorn text-yellow-500 mr-2"></i> إعلانات السيرفر'
             };
             if(titleEl && titles[tab]) titleEl.innerHTML = titles[tab];
 
@@ -15934,6 +16247,8 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
                 pulseCont.classList.remove('hidden');
             } else if (tab === 'guilds') {
                 if(guildCont) guildCont.classList.remove('hidden');
+            } else if (tab === 'announcements') {
+                if(annCont) annCont.classList.remove('hidden');
             }
             
             // تسجيل التتبع في הـ History
@@ -15941,6 +16256,38 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
             
             // الصعود لأعلى الصفحة أوتوماتيكياً دايماً
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.renderAnnouncements = () => {
+            const container = document.getElementById('comp-announcements-container');
+            if(!container) return;
+
+            let html = `
+            <div class="bg-gradient-to-b from-slate-900 to-slate-800 border border-yellow-500/50 p-4 rounded-2xl shadow-[0_10px_30px_rgba(250,204,21,0.15)] text-center mb-5 relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 opacity-10"><i class="fa-solid fa-bullhorn text-8xl text-yellow-400"></i></div>
+                <h3 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 mb-2 relative z-10"><i class="fa-solid fa-ranking-star text-yellow-400 mr-1"></i> النشرة الإمبراطورية</h3>
+                <p class="text-[10px] text-gray-300 font-bold mb-3 relative z-10">هنا بتتسجل كل الأحداث والإنجازات العظيمة اللي بتحصل في السيرفر اليوم. السجل ده بيتنضف كل يوم الساعة 12 بالليل عشان ميهنجش موبايلك.</p>
+            </div>
+            <div class="space-y-3">`;
+
+            if(!appData.dailyAnnouncements || !appData.dailyAnnouncements.logs || appData.dailyAnnouncements.logs.length === 0) {
+                html += `<div class="text-center py-10 opacity-50"><i class="fa-solid fa-ghost text-5xl text-yellow-900 mb-4 block"></i><p class="text-white font-black">مفيش إنجازات لسه</p><p class="text-[10px] text-yellow-400 mt-1">الكوكب نايم النهاردة، ابدأ إنت واعمل إنجاز.</p></div>`;
+            } else {
+                // ترتيب الإعلانات بحيث الأحدث يظهر في الأعلى
+                let sortedLogs = [...appData.dailyAnnouncements.logs].sort((a,b) => b.timestamp - a.timestamp);
+                sortedLogs.forEach(log => {
+                    let timeStr = dayjs(log.timestamp).format('hh:mm A');
+                    html += `
+                        <div class="bg-slate-900 border-r-4 border-yellow-500 p-3 rounded-lg shadow-md flex items-center justify-between gap-3 animate-[sweep_0.3s_ease-out]">
+                            <div class="flex-1 text-[11px] font-bold text-gray-200 leading-relaxed text-right">${log.text}</div>
+                            <span class="text-[9px] text-yellow-500 font-black bg-black/50 px-2 py-1 rounded border border-yellow-500/20 whitespace-nowrap">${timeStr}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
         };
 
         let currentPermLbType = 'level';
@@ -21371,6 +21718,15 @@ const CURRENT_UPDATE_ID = "V63.0_SKILL_TREE";
             }
         });
     };
+
+    // تحديث لوحة الصدارة برمجياً كل 90 ثانية (دقيقة ونص) سواء داخل القسم أو خارجه لضمان أن البيانات حية دائماً
+    setInterval(() => {
+        if (currentLeaderboardSubSection === 'dynamic') {
+            renderLeaderboard();
+        } else if (currentLeaderboardSubSection === 'permanent') {
+            renderPermanentLeaderboard();
+        }
+    }, 90000);
 
     // ==========================================
     // PWA Service Worker Registration
