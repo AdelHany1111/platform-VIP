@@ -2339,9 +2339,9 @@
                 </div>
 
                 <div class="mb-3">
-                    <span class="text-[10px] text-gray-400 block mb-2"> </span>
-                    <div class="bg-black/50 border border-white/5 p-2 rounded-lg text-center cursor-pointer clickable-safe hover:bg-slate-800 transition-colors" onclick="switchAppView('view-store'); setTimeout(()=>document.querySelector('button[onclick*=\\'shapes\\']').click(), 200);">
-                        <p class="text-[10px] text-pink-400 font-bold"><i class=""></i> </p>
+                    <span class="text-[10px] text-gray-400 block mb-2">تخصيص المجسم ثلاثي الأبعاد:</span>
+                    <div class="bg-black/50 border border-pink-500/30 p-2 rounded-lg text-center cursor-pointer clickable-safe hover:bg-slate-800 transition-colors shadow-inner" onclick="switchAppView('view-store'); setTimeout(()=>document.querySelector('button[onclick*=\\'shapes\\']').click(), 200);">
+                        <p class="text-[10px] text-pink-400 font-bold"><i class="fa-solid fa-cubes"></i> الذهاب للمتجر لتغيير الشكل والخامة 🛒</p>
                     </div>
                 </div>
                 
@@ -3868,9 +3868,13 @@
                 if (available.length < 2) available = STORE_CATALOG.consumables.filter(i => !i.isLegendary); // تأمين ضد الأخطاء
                 
                 let shuffled = available.sort(() => 0.5 - Math.random());
+                // 🛡️ صيانة انهيار السيستم: توفير حماية لو لم يجد إلا عنصراً واحداً متاحاً
                 appData.luckyWheel = {
                     dateKey: shiftDate,
-                    items: [shuffled[0].id, shuffled[1].id]
+                    items: [
+                        shuffled[0]?.id || 'pot_double_xp', 
+                        shuffled[1]?.id || shuffled[0]?.id || 'item_energy_drink'
+                    ]
                 };
                 saveState();
             }
@@ -4926,6 +4930,10 @@
                 if(hasJustCompleted) {
                     renderQuests(); 
                     updateGamificationUI();
+                    // 🛡️ إصلاح تجربة المستخدم (UX): تحديث نافذة المهام الحية لو كانت مفتوحة أمام المستخدم
+                    if (document.getElementById('active-quests-modal').classList.contains('active')) {
+                        renderActiveQuests();
+                    }
                 } else {
                     // لو مجرد زيادة دقيقة في العداد، استخدم المحرك السريع
                     liveSyncActiveData();
@@ -5919,25 +5927,25 @@
             if(needsSave) saveState();
         }
 
-        // دالة مساعدة لتحديد معدل الدقائق لكل ساعة حسب شخصية البوت (تم إبطاء التقدم للنصف ليكون منطقياً)
+        // دالة مساعدة لتحديد معدل الدقائق لكل ساعة حسب شخصية البوت (تم ظبطها لواقعية البشر)
         function getMinsForHour(h, persona, skill, isSeasonEnding) {
             let base = 0;
             if (persona === 'morning') {
-                if (h >= 5 && h <= 12) base = 12; 
-                else if (h > 12 && h <= 16) base = 5;
+                if (h >= 5 && h <= 12) base = 40; 
+                else if (h > 12 && h <= 16) base = 15;
                 else base = 0;
             } else if (persona === 'night') {
-                if (h >= 20 || h <= 3) base = 12; 
-                else if (h > 16 && h < 20) base = 5;
+                if (h >= 20 || h <= 3) base = 40; 
+                else if (h > 16 && h < 20) base = 15;
                 else base = 0;
             } else if (persona === 'crammer') {
                 if (isSeasonEnding) {
-                    if (h >= 12 && h <= 23) base = 15; else base = 5;
+                    if (h >= 12 && h <= 23) base = 45; else base = 15;
                 } else {
-                    if (h >= 18) base = 10; else base = 1;
+                    if (h >= 18) base = 25; else base = 5;
                 }
             } else { // consistent
-                if (h >= 9 && h <= 21) base = 8; 
+                if (h >= 9 && h <= 21) base = 25; 
                 else base = 0;
             }
             return base * skill;
@@ -6008,7 +6016,8 @@
                     bot.activeEffects = bot.activeEffects.filter(eff => eff.endTime > currentMinTime);
 
                     let baseStudyMins = getMinsForHour(h, bot.persona, skill, isSeasonEnding);
-                    let isStudyingTime = baseStudyMins > 0;
+                    // الخوارزمية الجديدة: البوت بيذاكر احتماليا بناء على عدد الدقايق المتحددة ليه في الساعة دي، عشان ميبقاش بيذاكر الـ 60 دقيقة كلهم!
+                    let isStudyingTime = (Math.random() * 60) < baseStudyMins;
 
                     // 1. إدارة فترات الراحة المنظمة (Organic Breaks)
                     if (bot.isAtBreak) {
@@ -8986,7 +8995,7 @@
                         if (d === 0) {
                             crisisDesc = `الامتحان بكرة يا ريس! إنت مخلص ${Math.floor(progressScore)}% من المادة ونسبة نجاتك دلوقتي ${Math.floor(survivalProb)}%. مفيش وقت للندم، اللي فات مات واللي جي هو اللي هيشيلك.`;
                         } else if (isCrammingImpossible) {
-                            crisisDesc = `استحالة الزنقة: رياضياً وعلمياً، الوقت الفعلي المتبقي قبل الامتحان لا يكفي لختم المادة حتى لو لم تنم دقيقة واحدة! (طالب ${Math.floor(estimatedMinsRequired/60)} ساعة والوقت المتبقي ${Math.floor(totalRemainingPhysicalMins/60)} ساعة). إنت محتاج معجزة.`;
+                            crisisDesc = `استحالة الزنقة: رياضياً وعلمياً، الوقت الفعلي المتبقي قبل الامتحان لا يكفي لختم المادة حتى لو لم تنم دقيقة واحدة! (طالب ${Math.floor(estimatedMinsRequired/60)} ساعة والوقت المتبقي ${Math.floor(physicalMinsLeft/60)} ساعة). إنت محتاج معجزة.`;
                         } else if (isSleepRisk) {
                             crisisDesc = `خطر الانهيار الذهني: عشان تخلص المادة دي محتاج تذاكرها ${Math.floor(reqVelocityMinsPerDay/60)} ساعات يومياً. ده معناه إنك هتضحي بنومك، وتدخل الامتحان دماغك مهنجة ومش فاكر حاجة.`;
                         } else if (isKnowledgeVolatile) {
@@ -9192,6 +9201,8 @@
                 let titleDesc = sched.types.join(' + ');
                 // جلب اسم المادة الحقيقي من إعدادات الجدول المحفوظ نفسه
                 let actualSubjKey = sched.config ? sched.config.subj : currentActiveScheduleSubj;
+                // 🛡️ حماية أمنية (HTML Injection): تنظيف الاسم من علامات التنصيص لمنع انكسار زر الحذف
+                let safeSubjKeyForBtn = actualSubjKey.replace(/'/g, "\\'");
 
                 html += `
                 <div class="bg-slate-900 border border-fuchsia-500/30 rounded-2xl p-3 shadow-[0_0_20px_rgba(217,70,239,0.1)] relative">
@@ -9202,7 +9213,7 @@
                             <p class="text-[9px] text-gray-400 mt-1"><i class="fa-solid fa-filter text-cyan-400 mr-1"></i> ${titleDesc}</p>
                             <p class="text-[9px] text-gray-400 mt-0.5"><i class="fa-solid fa-fire text-orange-400 mr-1"></i> المتوسط: ${avgHours.toFixed(1)} ساعة/يوم</p>
                         </div>
-                        <button class="btn btn-sm bg-red-900/50 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/30 clickable-safe" onclick="deleteSavedSchedule('${actualSubjKey}', ${sched.id})"><i class="fa-solid fa-trash"></i> طيّر</button>
+                        <button class="btn btn-sm bg-red-900/50 text-red-400 hover:bg-red-600 hover:text-white border border-red-500/30 clickable-safe" onclick="deleteSavedSchedule('${safeSubjKeyForBtn}', ${sched.id})"><i class="fa-solid fa-trash"></i> طيّر</button>
                     </div>
                     <div class="bg-black/30 p-2 rounded-xl border border-white/5 h-64 overflow-y-auto hide-scrollbar">
                         ${daysHtml}
@@ -9630,7 +9641,10 @@
                 customClass: { popup: 'border border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.3)] rounded-3xl' }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    appData.savedSchedules[subjKey] = appData.savedSchedules[subjKey].filter(s => s.id !== schedId);
+                    // 🛡️ صيانة داتابيز: التأكد من وجود المادة لمنع الانهيار لو المادة الأصلية اتمسحت قبل كدة
+                    if (appData.savedSchedules[subjKey]) {
+                        appData.savedSchedules[subjKey] = appData.savedSchedules[subjKey].filter(s => s.id !== schedId);
+                    }
                     saveState();
                     renderSavedSchedules();
                     renderTimeBenderTabs(); // To update the badge count
@@ -11975,7 +11989,7 @@
                     timerWorker.postMessage('start');
                 } else {
                     // الجلسة انتهت وأنت خارج التطبيق تماماً
-                    let missedSecs = appData.activeSession.lastSavedTimeLeft || appData.activeSession.startingTimeLeft; 
+                    let missedSecs = appData.activeSession.lastSavedTimeLeft !== undefined ? appData.activeSession.lastSavedTimeLeft : appData.activeSession.startingTimeLeft; 
                     timeLeft = 0;
                     currentSessionMinutes = currentModeTime / 60; 
                     document.getElementById('current-subj-text').innerText = currentSubject || "وقت مستقطع ☕";
@@ -13485,6 +13499,8 @@
                         const container = document.getElementById('preview-3d-container');
                         if(!container) return;
                         
+                        container.innerHTML = ''; // 🛡️ إصلاح تسريب الذاكرة (Memory Leak): تفريغ الكانفاس القديم قبل إضافة الجديد
+                        
                         const pScene = new THREE.Scene(); 
                         const pCamera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000); 
                         const pRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: false }); // بدون Antialias للسرعة
@@ -14453,7 +14469,7 @@
         // 2- إضافة بطاقات التحديث الجديدة في أعلى مصفوفة UPDATES_HISTORY.
         
         
-const CURRENT_UPDATE_ID = "V67.0_ANNOUNCEMENTS_HUB";
+const CURRENT_UPDATE_ID = "V69.0_REALISTIC_BOTS";
 
         const UPDATE_COLORS = {
             emerald: { bg: 'bg-emerald-950/40', border: 'border-emerald-500', text: 'text-emerald-400', badge: 'bg-emerald-600' },
@@ -14467,8 +14483,24 @@ const CURRENT_UPDATE_ID = "V67.0_ANNOUNCEMENTS_HUB";
 
         const UPDATES_HISTORY = [
             {
-                version: "V67.0",
+                version: "V69.0",
                 date: "الآن",
+                title: "أنسنة البوتات وواقعية المنافسة 🤖⚖️",
+                desc: "1- <b>محاكاة بشرية واقعية:</b> قضينا على ثغرة (البوتات الخارقة) اللي كانت بتخلي البوت يذاكر 24 ساعة بدون توقف! البوتات دلوقتي بتذاكر معدل ساعات منطقي جداً تقدر تنافسه وتعديه لو شديت حيلك.<br>2- <b>توازن الصدارة:</b> تم تعديل خوارزميات نشاط البوتات عشان الترتيب يكون مبني على المجهود البشري الواقعي مش أرقام فلكية.",
+                icon: "fa-scale-balanced",
+                color: "blue"
+            },
+            {
+                version: "V68.0",
+                date: "سابقاً",
+                title: "عملية التطهير الشامل (Titan Fixes) 🛠️🛡️",
+                desc: "1- <b>منع الانهيار:</b> حلينا العطل القاتل (شاشة بيضا) اللي كان بيحصل في ساعة العدم لو المادة مستحيل تتلم.<br>2- <b>اقتصاد العداد:</b> قفلنا ثغرة الدبل كوينز اللي كانت بتحصل لو العداد خلص وإنت بره التطبيق.<br>3- <b>الكورسات الخارجية:</b> صلحنا الـ Error اللي بيظهر لو حاولت تمسح أو تعلم على محاضرة في كورس اتمسح أصلا.<br>4- <b>واجهة الإعدادات:</b> شيلنا المربع الفاضي الغريب اللي كان في الإعدادات وحطينا مكانه زرار واضح للتحكم في الـ 3D.",
+                icon: "fa-screwdriver-wrench",
+                color: "rose"
+            },
+            {
+                version: "V67.0",
+                date: "سابقاً",
                 title: "مركز الإعلانات وضبط الأداء 🌍",
                 desc: "1- <b>قسم الإعلانات:</b> ضفنا قسم جديد في كوكب الدحيحة (العالم) بيحفظ كل أخبار السيرفر والإنجازات اللي حصلت النهاردة عشان تتابعها في أي وقت.<br>2- <b>حماية الذاكرة:</b> سجل الإعلانات بيتمسح أوتوماتيك كل يوم الساعة 12 بليل عشان الداتابيز متهنجش.<br>3- <b>ذكاء الشريط:</b> شريط الإذاعة بقى بيظهرلك في أي قسم إنت فيه، واتجاه الكلام اتظبط مع العربي (من الشمال لليمين)، ومبقاش يظهر غير وإنت فاتح التطبيق (عشان ميجيبلكش شلل لما تفتح بعد غياب طويل).",
                 icon: "fa-bullhorn",
@@ -19574,6 +19606,7 @@ const CURRENT_UPDATE_ID = "V67.0_ANNOUNCEMENTS_HUB";
     window.deleteExtLecture = (lId) => {
         playSound('click');
         let crs = appData.externalCourses.find(c => c.id === currentActiveExtCourseId);
+        if (!crs) return;
         crs.lectures = crs.lectures.filter(l => l.id !== lId);
         saveState(); renderExtLecturesList(); renderExtCourses();
     };
@@ -19581,7 +19614,9 @@ const CURRENT_UPDATE_ID = "V67.0_ANNOUNCEMENTS_HUB";
     window.toggleExtLecState = (lId) => {
         playSound('click');
         let crs = appData.externalCourses.find(c => c.id === currentActiveExtCourseId);
+        if (!crs) return;
         let lec = crs.lectures.find(l => l.id === lId);
+        if (!lec) return;
         lec.done = !lec.done;
         saveState(); renderExtLecturesList(); renderExtCourses();
     };
@@ -19589,7 +19624,9 @@ const CURRENT_UPDATE_ID = "V67.0_ANNOUNCEMENTS_HUB";
     window.toggleExtLecReviewState = (lId) => {
         playSound('click');
         let crs = appData.externalCourses.find(c => c.id === currentActiveExtCourseId);
+        if (!crs) return;
         let lec = crs.lectures.find(l => l.id === lId);
+        if (!lec) return;
         lec.reviewed = !lec.reviewed;
         saveState(); renderExtLecturesList(); renderExtCourses();
     };
