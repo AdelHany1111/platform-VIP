@@ -5749,7 +5749,7 @@
             if(!appData.leaderboard.bots) appData.leaderboard.bots = [];
 
             // 1. توليد البوتات للمرة الأولى أو عند بداية موسم جديد (صمام الأمان هنا)
-            if(appData.leaderboard.seasonId !== currentSeason.id || appData.leaderboard.bots.length === 0) {
+            if(appData.leaderboard.seasonId !== currentSeason.id || appData.leaderboard.bots.length < 127) {
                 
                 // 🎁 توزيع مكافآت الموسم القديم إذا كان هناك بوتات قديمة قبل التصفير
                 if(appData.leaderboard.bots.length > 0 && appData.leaderboard.seasonId) {
@@ -6754,20 +6754,20 @@
         window.switchLbTime = (time, btn) => {
             playSound('click');
             currentLbTime = time;
-            document.querySelectorAll('#view-leaderboard .cyber-tab-btn').forEach(b => {
-                if(b.innerText.includes('اليوم') || b.innerText.includes('الموسم')) b.classList.remove('active');
-            });
-            btn.classList.add('active');
+            if(btn && btn.parentElement) {
+                btn.parentElement.querySelectorAll('.cyber-tab-btn').forEach(b => b.classList.remove('active'));
+            }
+            if(btn) btn.classList.add('active');
             renderLeaderboard();
         };
 
         window.switchLbType = (type, btn) => {
             playSound('click');
             currentLbType = type;
-            document.querySelectorAll('#view-leaderboard .cyber-tab-btn').forEach(b => {
-                if(b.innerText.includes('وقت') || b.innerText.includes('XP') || b.innerText.includes('الثروة')) b.classList.remove('active');
-            });
-            btn.classList.add('active');
+            if(btn && btn.parentElement) {
+                btn.parentElement.querySelectorAll('.cyber-tab-btn').forEach(b => b.classList.remove('active'));
+            }
+            if(btn) btn.classList.add('active');
             renderLeaderboard();
         };
 
@@ -14469,7 +14469,7 @@
         // 2- إضافة بطاقات التحديث الجديدة في أعلى مصفوفة UPDATES_HISTORY.
         
         
-const CURRENT_UPDATE_ID = "V69.0_REALISTIC_BOTS";
+const CURRENT_UPDATE_ID = "V70.0_LEADERBOARD_FIXES";
 
         const UPDATE_COLORS = {
             emerald: { bg: 'bg-emerald-950/40', border: 'border-emerald-500', text: 'text-emerald-400', badge: 'bg-emerald-600' },
@@ -14483,8 +14483,16 @@ const CURRENT_UPDATE_ID = "V69.0_REALISTIC_BOTS";
 
         const UPDATES_HISTORY = [
             {
-                version: "V69.0",
+                version: "V70.0",
                 date: "الآن",
+                title: "صيانة لوحة الصدارة الذكية 🏆⚡",
+                desc: "1- <b>تحديث لايف كل 5 ثواني:</b> لوحة الصدارة بقت بتعمل ريفريش أوتوماتيك كل 5 ثواني طول ما إنت فاتحها عشان تتابع الرانك لحظة بلحظة!<br>2- <b>إصلاح زراير التنقل:</b> حلينا مشكلة تعليق التابات بين (وقت الفرم، الثروة، والـ XP) وبقت شغالة بلمسة.<br>3- <b>توسعة جيش الدحيحة القدامى:</b> لو إنت مستخدم قديم وكان بيظهرلك 62 بوت بس، دلوقتي السيستم هيزودهم لـ 127 بوت أوتوماتيك عشان المنافسة تبقى عادلة.",
+                icon: "fa-bolt",
+                color: "yellow"
+            },
+            {
+                version: "V69.0",
+                date: "سابقاً",
                 title: "أنسنة البوتات وواقعية المنافسة 🤖⚖️",
                 desc: "1- <b>محاكاة بشرية واقعية:</b> قضينا على ثغرة (البوتات الخارقة) اللي كانت بتخلي البوت يذاكر 24 ساعة بدون توقف! البوتات دلوقتي بتذاكر معدل ساعات منطقي جداً تقدر تنافسه وتعديه لو شديت حيلك.<br>2- <b>توازن الصدارة:</b> تم تعديل خوارزميات نشاط البوتات عشان الترتيب يكون مبني على المجهود البشري الواقعي مش أرقام فلكية.",
                 icon: "fa-scale-balanced",
@@ -16273,6 +16281,8 @@ const CURRENT_UPDATE_ID = "V69.0_REALISTIC_BOTS";
             // إظهار القسم المطلوب
             if(tab === 'leaderboard') {
                 lbCont.classList.remove('hidden');
+                if (currentLeaderboardSubSection === 'dynamic') renderLeaderboard();
+                else renderPermanentLeaderboard();
             } else if (tab === 'barter') {
                 barterCont.classList.remove('hidden');
             } else if (tab === 'pulse') {
@@ -16352,7 +16362,9 @@ const CURRENT_UPDATE_ID = "V69.0_REALISTIC_BOTS";
         window.switchPermLbType = (type, btn) => {
             playSound('click');
             currentPermLbType = type;
-            document.querySelectorAll('#lb-permanent-section .cyber-tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn && btn.parentElement) {
+                btn.parentElement.querySelectorAll('.cyber-tab-btn').forEach(b => b.classList.remove('active'));
+            }
             if(btn) btn.classList.add('active');
             renderPermanentLeaderboard();
         };
@@ -21756,14 +21768,19 @@ const CURRENT_UPDATE_ID = "V69.0_REALISTIC_BOTS";
         });
     };
 
-    // تحديث لوحة الصدارة برمجياً كل 90 ثانية (دقيقة ونص) سواء داخل القسم أو خارجه لضمان أن البيانات حية دائماً
+    // تحديث لوحة الصدارة برمجياً كل 5 ثواني فور الدخول للقسم فقط لمنع استهلاك الموارد بالخارج
     setInterval(() => {
-        if (currentLeaderboardSubSection === 'dynamic') {
-            renderLeaderboard();
-        } else if (currentLeaderboardSubSection === 'permanent') {
-            renderPermanentLeaderboard();
+        const viewLb = document.getElementById('view-leaderboard');
+        const compLbCont = document.getElementById('comp-leaderboard-container');
+        
+        if (viewLb && viewLb.classList.contains('active') && compLbCont && !compLbCont.classList.contains('hidden')) {
+            if (currentLeaderboardSubSection === 'dynamic') {
+                renderLeaderboard();
+            } else if (currentLeaderboardSubSection === 'permanent') {
+                renderPermanentLeaderboard();
+            }
         }
-    }, 90000);
+    }, 5000);
 
     // ==========================================
     // PWA Service Worker Registration
