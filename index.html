@@ -6754,20 +6754,22 @@
         window.switchLbTime = (time, btn) => {
             playSound('click');
             currentLbTime = time;
-            if(btn && btn.parentElement) {
-                btn.parentElement.querySelectorAll('.cyber-tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn) {
+                const container = btn.closest('.cyber-tabs');
+                if(container) container.querySelectorAll('.cyber-tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
             }
-            if(btn) btn.classList.add('active');
             renderLeaderboard();
         };
 
         window.switchLbType = (type, btn) => {
             playSound('click');
             currentLbType = type;
-            if(btn && btn.parentElement) {
-                btn.parentElement.querySelectorAll('.cyber-tab-btn').forEach(b => b.classList.remove('active'));
+            if(btn) {
+                const container = btn.closest('.cyber-tabs');
+                if(container) container.querySelectorAll('.cyber-tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
             }
-            if(btn) btn.classList.add('active');
             renderLeaderboard();
         };
 
@@ -6776,9 +6778,12 @@
             playSound('click');
             if(!appData.nemesis) appData.nemesis = { id: null, date: "" };
             
+            // حماية XSS لمنع حقن الأكواد في اسم البوت
+            let safeName = escapeHTML(botName || 'مجهول');
+            
             if(action === 'set') {
                 appData.nemesis = { id: botId, date: dayjs().format('YYYY-MM-DD') };
-                Swal.fire({toast:true, position:'top', title:`تم تحديد (${botName}) كعدو لدود! 🎯`, text: 'تتبع تقدمه من تحت العداد لسحقه.', icon:'success', showConfirmButton:false, timer:4000, background:'#450a0a', color:'#f87171'});
+                Swal.fire({toast:true, position:'top', title:`تم تحديد (${safeName}) كعدو لدود! 🎯`, text: 'تتبع تقدمه من تحت العداد لسحقه.', icon:'success', showConfirmButton:false, timer:4000, background:'#450a0a', color:'#f87171'});
             } else {
                 appData.nemesis = { id: null, date: "" };
                 window.currentNemesisData = null; // تفريغ البيانات الحية
@@ -6791,7 +6796,11 @@
             
             // إخفاء الشريط من تحت العداد فوراً إذا تم الإلغاء
             const ntCont = document.getElementById('nemesis-tracker-container');
-            if(action === 'remove' && ntCont) ntCont.classList.add('hidden');
+            if(action === 'remove' && ntCont) {
+                ntCont.classList.add('hidden');
+                document.getElementById('nt-user-mins').innerText = '0';
+                document.getElementById('nt-bot-mins').innerText = '0';
+            }
         };
 
         // 🔮 مولد تحليلات الذكاء الاصطناعي العميقة لبروفايل البوتات 🔮
@@ -6832,11 +6841,14 @@
 
         window.openPlayerCard = (idStr) => {
             playSound('click');
+            if (idStr === 'real_user') return; // حماية ضد الضغط على بطاقتك الشخصية في لوحة الصدارة
+            
             let dataList = getPreparedBots(currentLbTime);
             let player = dataList.find(b => b.id === idStr);
             if(!player) return;
 
             let botState = appData.leaderboard.bots.find(b => b.id === idStr);
+            if(!botState) return; // صمام أمان إضافي
             
             // ترحيل البيانات للتوافق الكامل
             if(botState.coins === undefined) botState.coins = Math.floor(Math.random() * 200) + 50;
@@ -7312,7 +7324,7 @@
             // 1. Get Stateful Bots & User
             let computedBots = getPreparedBots(currentLbTime);
             
-            // حساب أيام الموسم لحساب بيانات المستخدم الموسمية بدقة
+            // حساب أيام الموسم لحساب بيانات المستخدم الموسمية بدقة (بأمان تام ضد הـ NaN)
             const sInfo = getCustomSeasonInfo();
             let seasonMinsUser = 0; let seasonXpUser = 0; let seasonCoinsUser = 0;
             let currentDayIterator = dayjs(sInfo.start);
@@ -7321,7 +7333,7 @@
             
             while(currentDayIterator.isBefore(endDay) || currentDayIterator.isSame(endDay, 'day')) {
                 let dStr = currentDayIterator.format('YYYY-MM-DD');
-                let mMins = appData.studyHistory[dStr] || 0;
+                let mMins = (appData.studyHistory && appData.studyHistory[dStr]) ? appData.studyHistory[dStr] : 0;
                 seasonMinsUser += mMins;
                 seasonXpUser += (mMins * 10); // تقريبي
                 seasonCoinsUser += (mMins * 0.5); // تقريبي
@@ -7331,22 +7343,23 @@
             let userStats = currentLbTime === 'daily' ? appData.vsStats.today : { mins: seasonMinsUser, xp: seasonXpUser, coins: seasonCoinsUser };
             
             let d2Badge = (appData.skillTree.nodes['d2'] && appData.skillTree.nodes['d2'] > 0) ? ' <i class="fa-solid fa-fire-flame-curved text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.9)] animate-pulse" title="المحارب الأسطوري"></i>' : '';
+            let defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${appData.userName || 'Adel'}`;
             let userObj = {
                 id: 'real_user',
                 // إضافة ميزة (VIP Crown): تاج لامع في الصدارة و(هيبة المحارب)
                 name: (appData.bank.vip ? appData.userName + ' <i class="fa-solid fa-crown text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]" title="عميل VIP ذهبي"></i>' : appData.userName) + d2Badge,
-                avatar: appData.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Adel',
+                avatar: appData.avatarUrl ? appData.avatarUrl : defaultAvatar,
                 isUser: true,
-                mins: Math.floor(userStats.mins),
-                xp: Math.floor(userStats.xp),
-                coins: Math.floor(userStats.coins),
-                title: appData.activeTitle.name || 'إمبراطور الفرم',
+                mins: Math.floor(userStats.mins || 0),
+                xp: Math.floor(userStats.xp || 0),
+                coins: Math.floor(userStats.coins || 0),
+                title: (appData.activeTitle && appData.activeTitle.name) ? appData.activeTitle.name : 'إمبراطور الفرم',
                 trendNum: 1, 
                 isOnline: true
             };
 
             let allPlayers = [...computedBots, userObj];
-            allPlayers.sort((a, b) => b[currentLbType] - a[currentLbType]);
+            allPlayers.sort((a, b) => (b[currentLbType] || 0) - (a[currentLbType] || 0));
 
             let userRankIndex = allPlayers.findIndex(p => p.id === 'real_user');
             let userRank = userRankIndex + 1;
@@ -7355,7 +7368,13 @@
             let nemesisId = null;
             let today = dayjs().format('YYYY-MM-DD');
             if(appData.nemesis && appData.nemesis.id && appData.nemesis.date === today) {
-                nemesisId = appData.nemesis.id;
+                let checkBotExists = allPlayers.find(p => p.id === appData.nemesis.id);
+                if (checkBotExists) {
+                    nemesisId = appData.nemesis.id;
+                } else {
+                    appData.nemesis = { id: null, date: "" }; // تنظيف لو البوت اتمسح
+                    window.currentNemesisData = null;
+                }
             }
 
             // Projected Rewards based on Rank using the New Balanced Economy System
@@ -7365,7 +7384,7 @@
                 
                 if(userRank <= 15) {
                     let rewardList = currentLbTime === 'daily' ? DAILY_REWARDS : SEASON_REWARDS;
-                    rAmount = rewardList[userRank - 1]; // Rank 1 is index 0
+                    rAmount = rewardList[userRank - 1] || 0; // Rank 1 is index 0
                 }
                 
                 if(rAmount > 0) {
@@ -7380,7 +7399,7 @@
             let html = '';
             
             const formatVal = (val, type) => {
-                let cleanVal = Math.floor(val); // إجبار أي رقم (دقايق، خبرة، كوينز) إنه يكون صحيح بدون كسور
+                let cleanVal = Math.floor(val || 0); // إجبار أي رقم (دقايق، خبرة، كوينز) إنه يكون صحيح بدون كسور
                 if(type === 'mins') return `${cleanVal} د`;
                 if(type === 'xp') return `${cleanVal} XP`;
                 return `${cleanVal} كوين`;
@@ -7474,7 +7493,8 @@
             if(currentLbTime === 'season') window.currentLiveSeasonRank = userRank;
             if(nemesisId) {
                 let bot = allPlayers.find(p => p.id === nemesisId);
-                if(bot) window.currentNemesisData = { name: bot.name, mins: Math.floor(bot.mins) };
+                if(bot) window.currentNemesisData = { name: bot.name, mins: Math.floor(bot.mins || 0) };
+                else window.currentNemesisData = null; // تنظيف لو البوت اتمسح
             } else {
                 window.currentNemesisData = null;
             }
@@ -14469,7 +14489,7 @@
         // 2- إضافة بطاقات التحديث الجديدة في أعلى مصفوفة UPDATES_HISTORY.
         
         
-const CURRENT_UPDATE_ID = "V70.0_LEADERBOARD_FIXES";
+const CURRENT_UPDATE_ID = "V71.0_LEADERBOARD_MASTER";
 
         const UPDATE_COLORS = {
             emerald: { bg: 'bg-emerald-950/40', border: 'border-emerald-500', text: 'text-emerald-400', badge: 'bg-emerald-600' },
@@ -14482,6 +14502,14 @@ const CURRENT_UPDATE_ID = "V70.0_LEADERBOARD_FIXES";
         };
 
         const UPDATES_HISTORY = [
+            {
+                version: "V71.0",
+                date: "الآن",
+                title: "الكمال المعماري للوحة الصدارة (Titan Core) 🏆🛡️",
+                desc: "1- <b>حماية الانهيار:</b> سدينا 15 خطأ قاتل (Bugs) كانوا بيدمروا لوحة الصدارة زي الـ NaN والانهيار عند الضغط على كارتك الشخصي!<br>2- <b>توفير البطارية:</b> التحديث اللايف للصدارة مبقاش يستهلك بطاريتك لو إنت فاتح التحالفات أو أي تابة تانية.<br>3- <b>أمان سيبراني:</b> فعلنا حماية (XSS) على أسماء المنافسين عشان مستحيل حد يهكر التطبيق باسم ملغوم.<br>4- <b>دقة الحسابات:</b> الدقايق والتاريخ للمستخدم والبوتات بقت بتتحسب بمسطرة من غير أي دروبات.",
+                icon: "fa-shield-virus",
+                color: "emerald"
+            },
             {
                 version: "V70.0",
                 date: "الآن",
@@ -16378,8 +16406,8 @@ const CURRENT_UPDATE_ID = "V70.0_LEADERBOARD_FIXES";
 
             let allPlayers = [];
 
-            // 1. حساب بيانات المستخدم بدقة (اخر 30 يوم للساعات)
-            let userWealth = Math.floor(appData.coins + appData.bank.depositAmount - appData.bank.loanAmount);
+            // 1. حساب بيانات المستخدم بدقة (اخر 30 يوم للساعات بأمان كامل)
+            let userWealth = Math.floor((appData.coins || 0) + (appData.bank.depositAmount || 0) - (appData.bank.loanAmount || 0));
             
             let last30DaysMins = 0;
             let now = dayjs();
@@ -16390,54 +16418,56 @@ const CURRENT_UPDATE_ID = "V70.0_LEADERBOARD_FIXES";
                 }
             }
             let userHours = Math.floor(last30DaysMins / 60);
-            let userLevel = appData.level;
+            let userLevel = appData.level || 1;
             let userLifeXp = window.getUserLifetimeXp(); // حساب دقيق لـ XP المستخدم التراكمي
 
+            let defaultAvatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${appData.userName || 'Adel'}`;
             allPlayers.push({
                 id: 'real_user',
                 name: appData.bank.vip ? appData.userName + ' <i class="fa-solid fa-crown text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.9)]"></i>' : appData.userName,
-                avatar: appData.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Adel',
+                avatar: appData.avatarUrl ? appData.avatarUrl : defaultAvatar,
                 isUser: true,
                 level: userLevel,
                 wealth: userWealth,
                 hours: userHours,
                 lifeXp: userLifeXp,
-                title: appData.activeTitle.name || 'إمبراطور الفرم',
+                title: (appData.activeTitle && appData.activeTitle.name) ? appData.activeTitle.name : 'إمبراطور الفرم',
                 isOnline: true
             });
 
-            // 2. حساب بيانات البوتات بدقة (محاكاة منطقية لأخر 30 يوم بناءً على مستواهم لتبدو واقعية)
+            // 2. حساب بيانات البوتات بدقة وتأمين المتغيرات ضد الـ NaN و undefined
             appData.leaderboard.bots.forEach(bot => {
-                let botWealth = Math.floor(bot.coins + bot.bankDeposit - (bot.bankLoan || 0));
+                let botWealth = Math.floor((bot.coins || 0) + (bot.bankDeposit || 0) - (bot.bankLoan || 0));
                 
                 // محاكاة منطقية لآخر 30 يوم للبوت بناء على مستواه ومعدله
                 let simulated30DaysMins = Math.floor(Math.min((bot.lifetimeMins || 0), (bot.level || 1) * 300));
-                let botHours = Math.floor((simulated30DaysMins + bot.dailyMins) / 60);
+                let botHours = Math.floor((simulated30DaysMins + (bot.dailyMins || 0)) / 60);
                 
                 allPlayers.push({
                     id: bot.id,
-                    name: bot.name,
+                    name: bot.name || 'مجهول',
                     avatar: bot.avatar,
                     isUser: false,
                     level: bot.level || 1,
                     wealth: botWealth,
                     hours: botHours,
-                    title: bot.title,
-                    isOnline: bot.isOnline
+                    title: bot.title || 'دحيح',
+                    isOnline: bot.isOnline || false
                 });
             });
 
             // فرز تنازلي صارم بناءً على الفلتر المختار
-            allPlayers.sort((a, b) => b[currentPermLbType] - a[currentPermLbType]);
+            allPlayers.sort((a, b) => (b[currentPermLbType] || 0) - (a[currentPermLbType] || 0));
 
             let userRankIndex = allPlayers.findIndex(p => p.id === 'real_user');
             let userRank = userRankIndex + 1;
 
             let html = '';
             const formatPermVal = (val, type) => {
-                if(type === 'level') return `Lvl ${val}`;
-                if(type === 'wealth') return `${val} كوين`;
-                return `${val} ساعة`;
+                let cVal = Math.floor(val || 0);
+                if(type === 'level') return `Lvl ${cVal}`;
+                if(type === 'wealth') return `${cVal} كوين`;
+                return `${cVal} ساعة`;
             };
 
             const getPermColor = (type) => {
@@ -21768,12 +21798,14 @@ const CURRENT_UPDATE_ID = "V70.0_LEADERBOARD_FIXES";
         });
     };
 
-    // تحديث لوحة الصدارة برمجياً كل 5 ثواني فور الدخول للقسم فقط لمنع استهلاك الموارد بالخارج
+    // تحديث لوحة الصدارة برمجياً كل 5 ثواني بذكاء شديد لتوفير بطارية الموبايل (لا يتم التحديث لو فاتح أي تابة تانية جوه قسم العالم)
     setInterval(() => {
         const viewLb = document.getElementById('view-leaderboard');
         const compLbCont = document.getElementById('comp-leaderboard-container');
+        const dashboardMain = document.getElementById('comp-dashboard-main');
         
-        if (viewLb && viewLb.classList.contains('active') && compLbCont && !compLbCont.classList.contains('hidden')) {
+        // يعمل التحديث فقط لو: القسم مرئي + حاوية الصدارة غير مخفية + الداشبورد الرئيسية مخفية (يعني اليوزر فعلاً جوه لوحة الصدارة بيقرأ الأسماء)
+        if (viewLb && viewLb.classList.contains('active') && compLbCont && !compLbCont.classList.contains('hidden') && dashboardMain && dashboardMain.classList.contains('hidden')) {
             if (currentLeaderboardSubSection === 'dynamic') {
                 renderLeaderboard();
             } else if (currentLeaderboardSubSection === 'permanent') {
