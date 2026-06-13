@@ -4177,9 +4177,50 @@
         };
 
         // ==========================================
-        // V1.3 CORE DATA STATE & MIGRATION
+        // V1.3 CORE DATA STATE & MIGRATION (IndexedDB Engine)
         // ==========================================
-        let appData = JSON.parse(localStorage.getItem('focusMasryV9')) || JSON.parse(localStorage.getItem('focusMasryV8')) || {
+        const DB_NAME = 'focus_empire_rpg_xkq9b2_db';
+        const DB_VERSION = 1;
+        let dbInstance = null;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) return resolve(dbInstance);
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('user_core_data')) db.createObjectStore('user_core_data', { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('academic_data')) db.createObjectStore('academic_data', { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('tasks_and_logs')) db.createObjectStore('tasks_and_logs', { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('world_and_guilds')) db.createObjectStore('world_and_guilds', { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains('inventory_and_store')) db.createObjectStore('inventory_and_store', { keyPath: 'id' });
+                };
+                req.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function dbGet(storeName, id) {
+            const db = await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const req = tx.objectStore(storeName).get(id);
+                req.onsuccess = () => resolve(req.result ? req.result.data : null);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function dbPut(storeName, id, data) {
+            const db = await initDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const req = tx.objectStore(storeName).put({ id, data });
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        const defaultAppData = {
             onboarded: false, userName: "دحيح مجهول", avatarUrl: "", profile: {}, inventory: [],
             bank: { loanAmount: 0, loanDate: null, depositAmount: 0, depositDate: null, vip: false, certAmount: 0, certDate: null, charityMultiplierMins: 0 },
             lifeTasks: { date: "", bed: false, msg: false, salah: 0, dhikr: false, teeth: false, shower: false, push: false, sit: false },
@@ -4192,7 +4233,6 @@
                 longestSession: 0, totalLifetimeCoins: 0, coinsSpent: 0, tasksCreated: 0, distractionsCount: 0, startDate: dayjs().format('YYYY-MM-DD'),
                 bankInterestEarned: 0, totalBreakTime: 0, shortBreaks: 0, longBreaks: 0, questsCompleted: 0, maxCoinsHeld: 0, lifeTasksCompleted: 0,
                 charityDonated: 0, itemsUsed: 0, manualPauses: 0, deepWorkSessions: 0, microBreaks: 0, tasksDeleted: 0, maxStreak: 0, questsIgnored: 0,
-                // V1.3 New Stats
                 shieldsUsed: 0, potionsUsed: 0, lootBoxesOpened: 0, dailyCoinsEarned: 0, dailyCoinsDate: ""
             },
             settings: { strictMode: false, oledMode: false, wakeLock: true, sfx: true, blindMode: false, reviewMode: false, autoBreak: false, dndMode: false, focusBell: false, lockdownMode: false, lofiTrack: 'n61ULEU7CO0' },
@@ -4204,53 +4244,145 @@
             distractionLogs: [], dailyReflections: [],
             habits: { date: "", sleep: false, exercise: false }, timebox: { d: "", hours: {} }, lastStudyDates: {}, sortTasksAuto: false,
             subjects: [], theme: 'default', shape3D: 'octahedron', effect3D: 'spin', savedSchedules: {}, subjectHistory: {}, subjectAIAnalysis: { lastUpdate: "", data: {} },
-            
-            // V1.3 New Data Structures
-            activeEffects: [], // Array of {id, type, name, endTime, value}
-            badges: [], // Array of owned badges {id, state, progress}
-            dailyShop: { date: "", items: [] }, // Daily randomized items with 10% discount
-            blackMarket: { date: "", activeHour: -1, items: [], notified: false }, // Black Market Data
-            purchasedMaterials: ['default'], activeMaterial: 'default',
-            purchasedParticles: ['confetti'], activeParticle: 'confetti',
-            vsStats: { 
-                today: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, 
-                yest: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, 
-                thisWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, 
-                lastWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 },
-                currentWeekStr: dayjs().startOf('week').format('YYYY-MM-DD')
-            },
-            leaderboard: { date: "", weeklyDate: "", dailyBots: [], weeklyBots: [] },
-            notifications: [], unreadNotifs: 0,
+            activeEffects: [], badges: [], dailyShop: { date: "", items: [] }, blackMarket: { date: "", activeHour: -1, items: [], notified: false },
+            purchasedMaterials: ['default'], activeMaterial: 'default', purchasedParticles: ['confetti'], activeParticle: 'confetti',
+            vsStats: { today: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, yest: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, thisWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, lastWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, currentWeekStr: dayjs().startOf('week').format('YYYY-MM-DD') },
+            leaderboard: { date: "", weeklyDate: "", dailyBots: [], weeklyBots: [] }, notifications: [], unreadNotifs: 0,
             playtimeRewards: { date: "", r60: false, r120: false, r180: false },
-            tours: { main: false, tasks: false, syllabus: false, stats: false, store: false, leaderboard: false }, // V1.4 Advanced Contextual Tours
-            equippedSystemTitle: null, titleRewardDate: "", // V1.5 System Titles
-            // V2.0 Cosmetics
-            purchasedShapes: ['octahedron'], activeShape: 'octahedron',
-            purchasedNames: ['default'], activeName: 'default',
-            purchasedHeaders: ['default'], activeHeader: 'default',
-            peakCallsExpires: "", // الموسم الذي تنتهي فيه البطاقة
-            libraryFavorites: [], // مكتبة العلم: المفضلة
-            librarySeen: [], // مكتبة العلم: المقروء لتأخير ظهوره
-            libraryProgress: { motivation: 1, success: 1, riches: 1, advice: 1, mistakes: 1, favorites: 1 }, // V6: حفظ مكان القراءة
-            barterData: { trades: [], karma: 0, lastUpdate: "", history: [] }, // V6: بيانات سوق المقايضة
-            guildData: { myGuildId: null, allGuilds: [], logs: [], mutiny: { active: false, botId: null, targetMins: 0, currentMins: 0, deadline: null }, lastTick: Date.now(), weeklyResetDate: "", lastVaultUpdate: Date.now(), periodUserCoins: 0 }, // V20: التحالفات الأكاديمية
-            skillTree: { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 } // V63: شجرة المهارات
+            tours: { main: false, tasks: false, syllabus: false, stats: false, store: false, leaderboard: false }, seenFeatures: {}, equippedSystemTitle: null, titleRewardDate: "",
+            purchasedShapes: ['octahedron'], activeShape: 'octahedron', purchasedNames: ['default'], activeName: 'default', purchasedHeaders: ['default'], activeHeader: 'default',
+            peakCallsExpires: "", libraryFavorites: [], librarySeen: [], libraryProgress: { motivation: 1, success: 1, riches: 1, advice: 1, mistakes: 1, favorites: 1 },
+            barterData: { trades: [], karma: 0, lastUpdate: "", history: [] }, guildData: { myGuildId: null, allGuilds: [], logs: [], mutiny: { active: false, botId: null, targetMins: 0, currentMins: 0, deadline: null }, lastTick: Date.now(), weeklyResetDate: "", lastVaultUpdate: Date.now(), periodUserCoins: 0 },
+            skillTree: { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 }
         };
-        
-        // V1.3 Anti-Cheat & Robust Migrations (NaN Preventer)
-        // متغير يحدد إذا كان التطبيق قد أنهى شاشة التحميل (لمنع زحام الإعلانات)
-        window.isAppFullyLoaded = false;
 
-        if(!appData.skillTree) appData.skillTree = { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 };
-        if(!appData.luckyWheel) appData.luckyWheel = { dateKey: "", items: [] }; 
-        if(!appData.dailyAnnouncements) appData.dailyAnnouncements = { date: dayjs().format('YYYY-MM-DD'), logs: [] }; // تعديل ليحفظ الداتا والسجل
-        if(!appData.dailyAnnouncements.logs) appData.dailyAnnouncements.logs = [];
+        let appData = JSON.parse(JSON.stringify(defaultAppData));
+        window.isAppFullyLoaded = false;
+        window.isDbLoaded = false;
+
+        const LS_SETTINGS_KEYS = ['theme', 'activeBg', 'activeMaterial', 'activeShape', 'activeParticle', 'activeName', 'activeHeader', 'gemColor', 'userName', 'avatarUrl', 'effect3D', 'onboarded', 'settings'];
+
+        async function migrateAndLoadData() {
+            try {
+                await initDB();
+                
+                let oldDataStr = localStorage.getItem('focusMasryV9') || localStorage.getItem('focusMasryV8');
+                let isMigrated = localStorage.getItem('focus_db_migrated');
+                
+                if (oldDataStr && !isMigrated) {
+                    console.log("جاري نقل الداتا لـ IndexedDB يابا...");
+                    let oldData = JSON.parse(oldDataStr);
+                    appData = { ...defaultAppData, ...oldData };
+
+                    LS_SETTINGS_KEYS.forEach(key => {
+                        if(appData[key] !== undefined) localStorage.setItem(`focus_setting_${key}`, JSON.stringify(appData[key]));
+                    });
+                    
+                    await Promise.all([
+                        dbPut('user_core_data', 'main', { xp: appData.xp, coins: appData.coins, level: appData.level, streak: appData.streak, advancedStats: appData.advancedStats, skillTree: appData.skillTree, profile: appData.profile, bank: appData.bank, activeRewards: appData.activeRewards, customTimers: appData.customTimers, moodStats: appData.moodStats, estimationStats: appData.estimationStats, habits: appData.habits, playtimeRewards: appData.playtimeRewards, vsStats: appData.vsStats, tours: appData.tours, seenFeatures: appData.seenFeatures, equippedSystemTitle: appData.equippedSystemTitle, titleRewardDate: appData.titleRewardDate, peakCallsExpires: appData.peakCallsExpires, totalMinutes: appData.totalMinutes, pomodoroRound: appData.pomodoroRound }),
+                        dbPut('academic_data', 'main', { subjects: appData.subjects, savedSchedules: appData.savedSchedules, externalCourses: appData.externalCourses, subjectStats: appData.subjectStats, studyHistory: appData.studyHistory, subjectHistory: appData.subjectHistory, lastStudyDates: appData.lastStudyDates, subjectAIAnalysis: appData.subjectAIAnalysis }),
+                        dbPut('tasks_and_logs', 'main', { tasks: appData.tasks, dailyQuests: appData.dailyQuests, flashQuests: appData.flashQuests, distractionLogs: appData.distractionLogs, dailyReflections: appData.dailyReflections, lifeTasks: appData.lifeTasks, dailyTimeline: appData.dailyTimeline, timebox: appData.timebox, recurringTasks: appData.recurringTasks, dailyAnnouncements: appData.dailyAnnouncements }),
+                        dbPut('world_and_guilds', 'main', { guildData: appData.guildData, leaderboard: appData.leaderboard, barterData: appData.barterData, globalPulse: appData.globalPulse }),
+                        dbPut('inventory_and_store', 'main', { inventory: appData.inventory, activeEffects: appData.activeEffects, dailyShop: appData.dailyShop, blackMarket: appData.blackMarket, purchasedTitles: appData.purchasedTitles, purchasedPets: appData.purchasedPets, purchasedBgs: appData.purchasedBgs, purchasedShapes: appData.purchasedShapes, purchasedNames: appData.purchasedNames, purchasedHeaders: appData.purchasedHeaders, purchasedMaterials: appData.purchasedMaterials, purchasedParticles: appData.purchasedParticles, badges: appData.badges })
+                    ]);
+                    
+                    localStorage.setItem('focus_db_migrated', 'true');
+                    console.log("النقل تم بنجاح 🚀!");
+                } else if (isMigrated) {
+                    console.log("جاري سحب الداتا من IndexedDB...");
+                    const [core, acad, tasks, world, inv] = await Promise.all([
+                        dbGet('user_core_data', 'main'),
+                        dbGet('academic_data', 'main'),
+                        dbGet('tasks_and_logs', 'main'),
+                        dbGet('world_and_guilds', 'main'),
+                        dbGet('inventory_and_store', 'main')
+                    ]);
+
+                    if(core) Object.assign(appData, core);
+                    if(acad) Object.assign(appData, acad);
+                    if(tasks) Object.assign(appData, tasks);
+                    if(world) Object.assign(appData, world);
+                    if(inv) Object.assign(appData, inv);
+
+                    LS_SETTINGS_KEYS.forEach(key => {
+                        let val = localStorage.getItem(`focus_setting_${key}`);
+                        if(val !== null) appData[key] = JSON.parse(val);
+                    });
+                }
+
+                // الحماية من الـ Undefined (زي الكود القديم بالظبط)
+                if(!appData.skillTree) appData.skillTree = { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 };
+                if(!appData.luckyWheel) appData.luckyWheel = { dateKey: "", items: [] }; 
+                if(!appData.dailyAnnouncements) appData.dailyAnnouncements = { date: dayjs().format('YYYY-MM-DD'), logs: [] };
+                if(!appData.dailyAnnouncements.logs) appData.dailyAnnouncements.logs = [];
+                if(!appData.libraryFavorites) appData.libraryFavorites = [];
+                if(!appData.librarySeen) appData.librarySeen = [];
+                if(!appData.libraryProgress) appData.libraryProgress = { motivation: 1, success: 1, riches: 1, advice: 1, mistakes: 1, favorites: 1 };
+                if(!appData.barterData) appData.barterData = { trades: [], karma: 0, lastUpdate: "", history: [] };
+                if(!appData.guildData) appData.guildData = { myGuildId: null, allGuilds: [], logs: [], mutiny: { active: false, botId: null, targetMins: 0, currentMins: 0, deadline: null }, lastTick: Date.now(), weeklyResetDate: "", lastVaultUpdate: Date.now(), periodUserCoins: 0 };
+                if(!appData.guildData.lastVaultUpdate) { appData.guildData.lastVaultUpdate = Date.now(); appData.guildData.periodUserCoins = 0; }
+                if(!appData.globalPulse) appData.globalPulse = { date: "", rooms: [] };
+                if(!appData.externalCourses) appData.externalCourses = [];
+                if(typeof appData.activePulseRoom === 'undefined') appData.activePulseRoom = null;
+                if(!appData.notifications) { appData.notifications = []; appData.unreadNotifs = 0; }
+                if(!appData.playtimeRewards) { appData.playtimeRewards = { date: dayjs().format('YYYY-MM-DD'), r60: false, r120: false, r180: false }; }
+                if(!appData.pushedAiInsights) appData.pushedAiInsights = { date: '', ids: [] }; 
+                if(!appData.aiSpamFilter) appData.aiSpamFilter = {}; 
+                if(!appData.tours) { appData.tours = { main: appData.tourCompleted || false, tasks: false, syllabus: false, stats: false, store: false, leaderboard: false }; } 
+                if(!appData.seenFeatures) appData.seenFeatures = {}; 
+                if(typeof appData.equippedSystemTitle === 'undefined') appData.equippedSystemTitle = null;
+                if(!appData.titleRewardDate) appData.titleRewardDate = "";
+                if(!appData.leaderboard) appData.leaderboard = { date: "", weeklyDate: "", dailyBots: [], weeklyBots: [] };
+                if(!appData.activeEffects) appData.activeEffects = [];
+                if(!appData.vsStats) {
+                    appData.vsStats = { today: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, yest: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, thisWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, lastWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, currentWeekStr: dayjs().startOf('week').format('YYYY-MM-DD') };
+                }
+                if(!appData.badges) appData.badges = [];
+                if(!appData.dailyShop) appData.dailyShop = { date: "", items: [] };
+                if(!appData.blackMarket) appData.blackMarket = { date: "", activeHour: -1, items: [], notified: false };
+                if(!appData.purchasedMaterials) { appData.purchasedMaterials = ['default']; appData.activeMaterial = 'default'; }
+                if(!appData.purchasedParticles) { appData.purchasedParticles = ['confetti']; appData.activeParticle = 'confetti'; }
+                if(!appData.moodStats) appData.moodStats = { great: 0, okay: 0, tired: 0 };
+                if(!appData.estimationStats) appData.estimationStats = { est: 0, act: 0 };
+                if(appData.totalMinutes === undefined || isNaN(appData.totalMinutes)) appData.totalMinutes = 0;
+                if(typeof appData.newInvItems === 'undefined') appData.newInvItems = 0;
+                if(!appData.subjectHistory) appData.subjectHistory = {};
+                if(!appData.subjectAIAnalysis) appData.subjectAIAnalysis = { lastUpdate: "", data: {} };
+                if(!appData.flashQuests) appData.flashQuests = { date: "", quests: [] }; 
+                if(!appData.recurringTasks) appData.recurringTasks = []; 
+                if(!appData.purchasedShapes) { appData.purchasedShapes = ['octahedron']; appData.activeShape = appData.shape3D || 'octahedron'; }
+                if(!appData.purchasedNames) { appData.purchasedNames = ['default']; appData.activeName = 'default'; }
+                if(!appData.purchasedHeaders) { appData.purchasedHeaders = ['default']; appData.activeHeader = 'default'; }
+                if(!appData.peakCallsExpires) appData.peakCallsExpires = "";
+                if(!appData.lastSeenUpdateId) appData.lastSeenUpdateId = ""; 
+                if(typeof appData.advancedStats.ticketMinutes === 'undefined') appData.advancedStats.ticketMinutes = 0; 
+                if(typeof appData.activeSession === 'undefined') appData.activeSession = null;
+                if(typeof appData.pausedSession === 'undefined') appData.pausedSession = null;
+                
+                const advDefaults = {
+                    shieldsUsed: 0, potionsUsed: 0, lootBoxesOpened: 0, dailyCoinsEarned: 0, dailyCoinsDate: "",
+                    totalBreakTime: 0, shortBreaks: 0, longBreaks: 0, questsCompleted: 0, maxCoinsHeld: 0,
+                    lifeTasksCompleted: 0, charityDonated: 0, itemsUsed: 0, manualPauses: 0, deepWorkSessions: 0,
+                    microBreaks: 0, tasksDeleted: 0, maxStreak: 0, questsIgnored: 0,
+                    appOpens: 1, sessionsStarted: 0, sessionsCompleted: 0, sessionsFailed: 0, tasksCreated: 0,
+                    tasksCompleted: 0, distractionsCount: 0, bankInterestEarned: 0, totalLifetimeCoins: 0, coinsSpent: 0, guildDonations: 0
+                };
+                for(let key in advDefaults) {
+                    if(appData.advancedStats[key] === undefined || isNaN(appData.advancedStats[key])) {
+                        appData.advancedStats[key] = advDefaults[key];
+                    }
+                }
+                
+                window.isDbLoaded = true;
+            } catch (err) {
+                console.error("Critical DB Error:", err);
+            }
+        }
 
         // --- 👑 محرك الإذاعة الإمبراطورية (Imperial Broadcast Engine) 👑 ---
         window.showImperialBroadcast = (message, eventId) => {
             if(!appData.dailyAnnouncements) appData.dailyAnnouncements = { date: dayjs().format('YYYY-MM-DD'), logs: [] };
             
-            // 1. تسجيل الإنجاز في قسم الإعلانات (سواء التطبيق مفتوح أو محاكاة غياب)
             if (!appData.dailyAnnouncements.logs.some(l => l.id === eventId)) {
                 appData.dailyAnnouncements.logs.push({
                     id: eventId,
@@ -4260,7 +4392,6 @@
                 saveState();
             }
 
-            // 2. إظهار الشريط العائم (فقط إذا كان المستخدم داخل التطبيق والشاشة محملة بالكامل)
             if (window.isAppFullyLoaded && document.visibilityState === 'visible') {
                 let container = document.getElementById('imperial-broadcast-container');
                 if (!container) {
@@ -4274,33 +4405,28 @@
                         </div>
                         <div class="imperial-ornament"><i class="fa-solid fa-ranking-star"></i></div>
                     `;
-                    document.body.appendChild(container); // يتم إرفاقه بـ body ليظهر في جميع الأقسام
+                    document.body.appendChild(container); 
                 }
                 
                 document.getElementById('imperial-broadcast-text').innerHTML = message;
                 container.classList.add('show');
                 playSound('success'); 
                 
-                // إخفاء الشريط بعد 15 ثانية (دورة أنيميشن كاملة)
                 setTimeout(() => {
                     container.classList.remove('show');
                 }, 15000);
             }
         };
 
-        // دالة توليد عناصر عجلة الحظ يومياً الساعة 11 مساءً
         window.generateLuckyWheelItems = () => {
             let now = dayjs();
-            // اليوم بالنسبة لعجلة الحظ يتغير الساعة 23:00 (11 مساءً)
             let shiftDate = now.hour() >= 23 ? now.add(1, 'day').format('YYYY-MM-DD') : now.format('YYYY-MM-DD');
 
             if (appData.luckyWheel.dateKey !== shiftDate || appData.luckyWheel.items.length !== 2) {
-                // فلترة المستهلكات המفتوحة للاعب (غير الأسطورية لضمان توازن اللعبة)
                 let available = STORE_CATALOG.consumables.filter(i => (!i.reqLevel || appData.level >= i.reqLevel) && !i.isLegendary);
-                if (available.length < 2) available = STORE_CATALOG.consumables.filter(i => !i.isLegendary); // تأمين ضد الأخطاء
+                if (available.length < 2) available = STORE_CATALOG.consumables.filter(i => !i.isLegendary);
                 
                 let shuffled = available.sort(() => 0.5 - Math.random());
-                // 🛡️ صيانة انهيار السيستم: توفير حماية لو لم يجد إلا عنصراً واحداً متاحاً
                 appData.luckyWheel = {
                     dateKey: shiftDate,
                     items: [
@@ -4312,89 +4438,36 @@
             }
         };
 
-        // تعويض اللاعبين ذوي المستوى المرتفع بنقاط المهارة التي فاتتهم بأثر رجعي
+        // تعويض اللاعبين ذوي المستوى المرتفع بنقاط المهارة
         let expectedSP = Math.max(0, appData.level - 1);
         if((appData.skillTree.points + appData.skillTree.spent) < expectedSP) {
             appData.skillTree.points = expectedSP - appData.skillTree.spent;
         }
 
-        if(!appData.libraryFavorites) appData.libraryFavorites = [];
-        if(!appData.librarySeen) appData.librarySeen = [];
-        if(!appData.libraryProgress) appData.libraryProgress = { motivation: 1, success: 1, riches: 1, advice: 1, mistakes: 1, favorites: 1 };
-        if(!appData.barterData) appData.barterData = { trades: [], karma: 0, lastUpdate: "", history: [] };
-        if(!appData.guildData) appData.guildData = { myGuildId: null, allGuilds: [], logs: [], mutiny: { active: false, botId: null, targetMins: 0, currentMins: 0, deadline: null }, lastTick: Date.now(), weeklyResetDate: "", lastVaultUpdate: Date.now(), periodUserCoins: 0 };
-        if(!appData.guildData.lastVaultUpdate) { appData.guildData.lastVaultUpdate = Date.now(); appData.guildData.periodUserCoins = 0; }
-        if(!appData.globalPulse) appData.globalPulse = { date: "", rooms: [] };
-
-        // 🛡️ المساعد السحري للتحقق من أبحاث التحالف (Guild Tech Helper) 🛡️
         window.hasGuildTech = (techId) => {
             if(!appData.guildData.myGuildId) return false;
             let g = appData.guildData.allGuilds.find(x => x.id === appData.guildData.myGuildId);
             return g ? g.tech[techId] : false;
         };
-        if(!appData.externalCourses) appData.externalCourses = [];
-        if(typeof appData.activePulseRoom === 'undefined') appData.activePulseRoom = null;
-        if(!appData.notifications) { appData.notifications = []; appData.unreadNotifs = 0; }
-        if(!appData.playtimeRewards) { appData.playtimeRewards = { date: dayjs().format('YYYY-MM-DD'), r60: false, r120: false, r180: false }; }
-        if(!appData.pushedAiInsights) appData.pushedAiInsights = { date: '', ids: [] }; // حماية تكرار ذكاء الرادار
-        if(!appData.aiSpamFilter) appData.aiSpamFilter = {}; // V3.2 فلتر الذكاء الاصطناعي المتقدم لمنع الإزعاج
-        if(!appData.tours) { appData.tours = { main: appData.tourCompleted || false, tasks: false, syllabus: false, stats: false, store: false, leaderboard: false }; } // نقل البيانات للجولات المتقدمة
-        if(!appData.seenFeatures) appData.seenFeatures = {}; // 🚀 تهيئة قاعدة بيانات مميزات التطبيق المكتشفة
-        if(typeof appData.equippedSystemTitle === 'undefined') appData.equippedSystemTitle = null;
-        if(!appData.titleRewardDate) appData.titleRewardDate = "";
-        if(!appData.leaderboard) appData.leaderboard = { date: "", weeklyDate: "", dailyBots: [], weeklyBots: [] };
-        if(!appData.activeEffects) appData.activeEffects = [];
-        if(!appData.vsStats) {
-            appData.vsStats = { 
-                today: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, 
-                yest: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, 
-                thisWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 }, 
-                lastWeek: { mins: 0, xp: 0, coins: 0, lecs: 0, tasks: 0 },
-                currentWeekStr: dayjs().startOf('week').format('YYYY-MM-DD')
+
+        // دالة الـ Debounce المساعدة
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
             };
         }
-        if(!appData.badges) appData.badges = [];
-        if(!appData.dailyShop) appData.dailyShop = { date: "", items: [] };
-        if(!appData.blackMarket) appData.blackMarket = { date: "", activeHour: -1, items: [], notified: false };
-        if(!appData.purchasedMaterials) { appData.purchasedMaterials = ['default']; appData.activeMaterial = 'default'; }
-        if(!appData.purchasedParticles) { appData.purchasedParticles = ['confetti']; appData.activeParticle = 'confetti'; }
-        if(!appData.moodStats) appData.moodStats = { great: 0, okay: 0, tired: 0 };
-        if(!appData.estimationStats) appData.estimationStats = { est: 0, act: 0 };
-        if(appData.totalMinutes === undefined || isNaN(appData.totalMinutes)) appData.totalMinutes = 0;
-        if(typeof appData.newInvItems === 'undefined') appData.newInvItems = 0;
-        if(!appData.subjectHistory) appData.subjectHistory = {};
-        if(!appData.subjectAIAnalysis) appData.subjectAIAnalysis = { lastUpdate: "", data: {} };
-        if(!appData.flashQuests) appData.flashQuests = { date: "", quests: [] }; // نظام المهام السرية
-        if(!appData.recurringTasks) appData.recurringTasks = []; // قوالب المهام المتكررة
-        if(!appData.purchasedShapes) { appData.purchasedShapes = ['octahedron']; appData.activeShape = appData.shape3D || 'octahedron'; }
-        if(!appData.purchasedNames) { appData.purchasedNames = ['default']; appData.activeName = 'default'; }
-        if(!appData.purchasedHeaders) { appData.purchasedHeaders = ['default']; appData.activeHeader = 'default'; }
-        if(!appData.peakCallsExpires) appData.peakCallsExpires = "";
-        if(!appData.lastSeenUpdateId) appData.lastSeenUpdateId = ""; // لتخزين رقم آخر تحديث رآه المستخدم بذكاء
-        if(typeof appData.advancedStats.ticketMinutes === 'undefined') appData.advancedStats.ticketMinutes = 0; // لعداد الـ 40 دقيقة
-        if(typeof appData.activeSession === 'undefined') appData.activeSession = null;
-        if(typeof appData.pausedSession === 'undefined') appData.pausedSession = null;
-        
-        // Fix advancedStats missing keys
-        const advDefaults = {
-            shieldsUsed: 0, potionsUsed: 0, lootBoxesOpened: 0, dailyCoinsEarned: 0, dailyCoinsDate: "",
-            totalBreakTime: 0, shortBreaks: 0, longBreaks: 0, questsCompleted: 0, maxCoinsHeld: 0,
-            lifeTasksCompleted: 0, charityDonated: 0, itemsUsed: 0, manualPauses: 0, deepWorkSessions: 0,
-            microBreaks: 0, tasksDeleted: 0, maxStreak: 0, questsIgnored: 0,
-            appOpens: 1, sessionsStarted: 0, sessionsCompleted: 0, sessionsFailed: 0, tasksCreated: 0,
-            tasksCompleted: 0, distractionsCount: 0, bankInterestEarned: 0, totalLifetimeCoins: 0, coinsSpent: 0, guildDonations: 0
-        };
-        for(let key in advDefaults) {
-            if(appData.advancedStats[key] === undefined || isNaN(appData.advancedStats[key])) {
-                appData.advancedStats[key] = advDefaults[key];
-            }
-        }
 
-        const saveState = () => { 
+        // الدالة الأصلية للبيانات
+        const executeSaveState = () => { 
             if(appData.coins > appData.advancedStats.maxCoinsHeld) appData.advancedStats.maxCoinsHeld = appData.coins;
             appData.advancedStats.maxStreak = Math.max(appData.advancedStats.maxStreak, appData.streak);
             
-            // 🛡️ حماية قاعدة البيانات من الانفجار (Garbage Collection)
             let historyKeys = Object.keys(appData.studyHistory || {});
             if (historyKeys.length > 60) {
                 let sortedKeys = historyKeys.sort();
@@ -4406,12 +4479,24 @@
             if (appData.barterData && appData.barterData.history && appData.barterData.history.length > 30) appData.barterData.history = appData.barterData.history.slice(-30);
 
             try {
-                localStorage.setItem('focusMasryV9', JSON.stringify(appData)); 
+                LS_SETTINGS_KEYS.forEach(key => {
+                    if(appData[key] !== undefined) localStorage.setItem(`focus_setting_${key}`, JSON.stringify(appData[key]));
+                });
+
+                if (window.isDbLoaded) {
+                    dbPut('user_core_data', 'main', { xp: appData.xp, coins: appData.coins, level: appData.level, streak: appData.streak, advancedStats: appData.advancedStats, skillTree: appData.skillTree, profile: appData.profile, bank: appData.bank, activeRewards: appData.activeRewards, customTimers: appData.customTimers, moodStats: appData.moodStats, estimationStats: appData.estimationStats, habits: appData.habits, playtimeRewards: appData.playtimeRewards, vsStats: appData.vsStats, tours: appData.tours, seenFeatures: appData.seenFeatures, equippedSystemTitle: appData.equippedSystemTitle, titleRewardDate: appData.titleRewardDate, peakCallsExpires: appData.peakCallsExpires, totalMinutes: appData.totalMinutes, pomodoroRound: appData.pomodoroRound }).catch(e => console.error(e));
+                    dbPut('academic_data', 'main', { subjects: appData.subjects, savedSchedules: appData.savedSchedules, externalCourses: appData.externalCourses, subjectStats: appData.subjectStats, studyHistory: appData.studyHistory, subjectHistory: appData.subjectHistory, lastStudyDates: appData.lastStudyDates, subjectAIAnalysis: appData.subjectAIAnalysis }).catch(e => console.error(e));
+                    dbPut('tasks_and_logs', 'main', { tasks: appData.tasks, dailyQuests: appData.dailyQuests, flashQuests: appData.flashQuests, distractionLogs: appData.distractionLogs, dailyReflections: appData.dailyReflections, lifeTasks: appData.lifeTasks, dailyTimeline: appData.dailyTimeline, timebox: appData.timebox, recurringTasks: appData.recurringTasks, dailyAnnouncements: appData.dailyAnnouncements }).catch(e => console.error(e));
+                    dbPut('world_and_guilds', 'main', { guildData: appData.guildData, leaderboard: appData.leaderboard, barterData: appData.barterData, globalPulse: appData.globalPulse }).catch(e => console.error(e));
+                    dbPut('inventory_and_store', 'main', { inventory: appData.inventory, activeEffects: appData.activeEffects, dailyShop: appData.dailyShop, blackMarket: appData.blackMarket, purchasedTitles: appData.purchasedTitles, purchasedPets: appData.purchasedPets, purchasedBgs: appData.purchasedBgs, purchasedShapes: appData.purchasedShapes, purchasedNames: appData.purchasedNames, purchasedHeaders: appData.purchasedHeaders, purchasedMaterials: appData.purchasedMaterials, purchasedParticles: appData.purchasedParticles, badges: appData.badges }).catch(e => console.error(e));
+                }
             } catch (e) {
-                console.error("Storage Full!", e);
-                Swal.fire({toast:true, position:'top', title:'مساحة التخزين ممتلئة! بعض التقدم قد لا يُحفظ.', icon:'error', showConfirmButton:false, timer:5000, background:'#450a0a', color:'#fff'});
+                console.error("Storage Save Error!", e);
             }
         };
+
+        // تغليف الدالة عشان تشتغل مرة واحدة بس بحد أقصى كل 500 مللي ثانية
+        const saveState = debounce(executeSaveState, 500);
 
         // ==========================================
         // V2.0 STORE CATALOG (Centralized & Expanded)
@@ -5246,7 +5331,39 @@
             }
         };
 
-        const updateAllAppUI = () => { if(typeof updateVersusAura==='function') updateVersusAura(); if(typeof updateActiveQuestsBadge==='function') updateActiveQuestsBadge(); updateGamificationUI(); renderSubjectsUI(); renderSyllabusCards(); renderSyllabusAI(); if(typeof renderZeroHour==='function') renderZeroHour(); if(document.getElementById('stats-analytics').classList.contains('block')) { renderGeneralStats(); updateCharts(); if(typeof renderDailyTimelineUI==='function') renderDailyTimelineUI(); } renderSyllabusStats(); renderAchievements(); renderQuests(); applySettings(); renderHabits(); renderLifeTasks(); if(document.getElementById('traits-modal') && document.getElementById('traits-modal').classList.contains('active')) renderTraitsData(); renderSmartAnalyzer(); renderVersusStats(); renderLeaderboard(); renderPermanentLeaderboard(); updateNotifBellUI(); updateInvBadge(); if(typeof renderExtCourses==='function') renderExtCourses(); };
+        const executeUpdateAllAppUI = () => { 
+            if(typeof updateVersusAura==='function') updateVersusAura(); 
+            if(typeof updateActiveQuestsBadge==='function') updateActiveQuestsBadge(); 
+            updateGamificationUI(); 
+            renderSubjectsUI(); 
+            renderSyllabusCards(); 
+            renderSyllabusAI(); 
+            if(typeof renderZeroHour==='function') renderZeroHour(); 
+            if(document.getElementById('stats-analytics').classList.contains('block')) { 
+                renderGeneralStats(); updateCharts(); 
+                if(typeof renderDailyTimelineUI==='function') renderDailyTimelineUI(); 
+            } 
+            renderSyllabusStats(); 
+            renderAchievements(); 
+            renderQuests(); 
+            applySettings(); 
+            renderHabits(); 
+            renderLifeTasks(); 
+            if(document.getElementById('traits-modal') && document.getElementById('traits-modal').classList.contains('active')) renderTraitsData(); 
+            renderSmartAnalyzer(); 
+            renderVersusStats(); 
+            renderLeaderboard(); 
+            renderPermanentLeaderboard(); 
+            updateNotifBellUI(); 
+            updateInvBadge(); 
+            if(typeof renderExtCourses==='function') renderExtCourses(); 
+        };
+
+        let uiUpdateFrame = null;
+        const updateAllAppUI = () => { 
+            if(uiUpdateFrame) cancelAnimationFrame(uiUpdateFrame);
+            uiUpdateFrame = requestAnimationFrame(executeUpdateAllAppUI);
+        };
 
         function playSound(type) { if(!appData.settings.sfx) return; try { let audio = document.getElementById(`sfx-${type}`); if(audio) { audio.currentTime = 0; audio.play().catch(e=>{}); } } catch(e){} }
         function infoAlert(msg) { playSound('click'); Swal.fire({text: msg, icon:'info', background:'#1e293b', color:'#fff', confirmButtonText: 'فهمت', confirmButtonColor: '#8b5cf6', toast:true, position:'top'}); }
@@ -8326,93 +8443,96 @@
             }
         };
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
             const st1 = document.getElementById('splash-stage-1');
             const st2 = document.getElementById('splash-stage-2');
             const st3 = document.getElementById('splash-stage-3');
             const statusTxt = document.getElementById('splash-status-text');
             const percTxt = document.getElementById('splash-percentage');
             
-            // عداد النسبة المئوية الوهمي لإضافة طابع المخابرات
-            let loadProgress = 0;
-            const updatePercentage = (target, duration) => {
-                let interval = 30; // ms
-                let step = (target - loadProgress) / (duration / interval);
-                let timer = setInterval(() => {
-                    loadProgress += step;
-                    if(loadProgress >= target) { loadProgress = target; clearInterval(timer); }
-                    if(percTxt) percTxt.innerText = `${Math.floor(loadProgress)}%`;
-                }, interval);
+            // دالة سحرية بتدي فرصة للموبايل "يتنفس" ويرسم الشاشة عشان ميهنجش
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            const fastUpdatePercentage = (target) => {
+                if(percTxt) percTxt.innerText = `${target}%`;
             };
 
-            // 1. بداية العرض السينمائي (يظهر اللوجو وتختفي المرحلة الأولى عند 1.5 ثانية)
-            setTimeout(() => {
-                st1.classList.replace('opacity-100', 'opacity-0');
-                st1.classList.add('scale-110');
-                st2.classList.replace('opacity-0', 'opacity-100');
-                st2.classList.replace('scale-95', 'scale-100');
-                updatePercentage(20, 800);
-            }, 1500);
+            // 1. بداية التحميل الحقيقي للداتا
+            fastUpdatePercentage(10);
+            await migrateAndLoadData();
+            
+            // تنفس للمتصفح عشان ينفذ الأنيميشن
+            await sleep(50);
 
-            // 2. تحميل البيانات الأساسية في الخلفية لمنع التهنيج (عند 2.5 ثانية)
-            setTimeout(() => {
-                if(statusTxt) statusTxt.innerText = "جاري تجميع السجلات التاريخية يابا...";
-                updatePercentage(40, 1000);
-                if (appData.leaderboard && appData.leaderboard.bots) {
-                    appData.leaderboard.bots.forEach(bot => {
-                        if(bot.coins === undefined) bot.coins = Math.floor(Math.random() * 200) + 50;
-                        if(bot.bankDeposit === undefined) bot.bankDeposit = Math.floor(Math.random() * 300);
-                        if(bot.bankLoan === undefined) bot.bankLoan = 0;
-                        if(bot.inventory === undefined) bot.inventory = [];
-                        if(bot.activeEffects === undefined) bot.activeEffects = [];
-                        if(bot.streak === undefined) bot.streak = Math.max(1, Math.floor(Math.random() * 12));
-                        if(bot.focusScore === undefined) bot.focusScore = Math.floor(Math.random() * 30) + 70;
-                        if(bot.tasksCreated === undefined) bot.tasksCreated = Math.floor(Math.random() * 40) + 10;
-                        if(bot.tasksCompleted === undefined) bot.tasksCompleted = Math.floor(bot.tasksCreated * 0.7);
-                        if(bot.distractionsCount === undefined) bot.distractionsCount = Math.floor(Math.random() * 10);
-                        if(bot.mood === undefined) bot.mood = ['great', 'okay', 'tired'][Math.floor(Math.random() * 3)];
-                        if(bot.habits === undefined) bot.habits = { sleep: Math.random() > 0.5, exercise: Math.random() > 0.5 };
-                        if(bot.isAtBreak === undefined) bot.isAtBreak = false;
-                        if(bot.breakTimeLeft === undefined) bot.breakTimeLeft = 0;
-                        if(bot.lastTickTime === undefined) bot.lastTickTime = Date.now();
-                    });
-                    saveState();
-                }
-            }, 2500);
+            // 2. تحديث الشاشة للمرحلة التانية بسرعة
+            st1.classList.replace('opacity-100', 'opacity-0');
+            st1.classList.add('scale-110');
+            st2.classList.replace('opacity-0', 'opacity-100');
+            st2.classList.replace('scale-95', 'scale-100');
+            
+            if(statusTxt) statusTxt.innerText = "جاري تجميع السجلات التاريخية...";
+            fastUpdatePercentage(40);
+            
+            // تنفس تاني قبل اللوب التقيلة
+            await sleep(50);
+            
+            // معالجة بيانات البوتات دفعة واحدة بدون تأخيرات
+            if (appData.leaderboard && appData.leaderboard.bots) {
+                appData.leaderboard.bots.forEach(bot => {
+                    if(bot.coins === undefined) bot.coins = Math.floor(Math.random() * 200) + 50;
+                    if(bot.bankDeposit === undefined) bot.bankDeposit = Math.floor(Math.random() * 300);
+                    if(bot.bankLoan === undefined) bot.bankLoan = 0;
+                    if(bot.inventory === undefined) bot.inventory = [];
+                    if(bot.activeEffects === undefined) bot.activeEffects = [];
+                    if(bot.streak === undefined) bot.streak = Math.max(1, Math.floor(Math.random() * 12));
+                    if(bot.focusScore === undefined) bot.focusScore = Math.floor(Math.random() * 30) + 70;
+                    if(bot.tasksCreated === undefined) bot.tasksCreated = Math.floor(Math.random() * 40) + 10;
+                    if(bot.tasksCompleted === undefined) bot.tasksCompleted = Math.floor(bot.tasksCreated * 0.7);
+                    if(bot.distractionsCount === undefined) bot.distractionsCount = Math.floor(Math.random() * 10);
+                    if(bot.mood === undefined) bot.mood = ['great', 'okay', 'tired'][Math.floor(Math.random() * 3)];
+                    if(bot.habits === undefined) bot.habits = { sleep: Math.random() > 0.5, exercise: Math.random() > 0.5 };
+                    if(bot.isAtBreak === undefined) bot.isAtBreak = false;
+                    if(bot.breakTimeLeft === undefined) bot.breakTimeLeft = 0;
+                    if(bot.lastTickTime === undefined) bot.lastTickTime = Date.now();
+                });
+                executeSaveState(); 
+            }
 
-            // 3. تجهيز محاكي البشر (عند 3.8 ثانية)
-            setTimeout(() => {
-                if(statusTxt) statusTxt.innerText = "تفعيل محاكي دحيحة الكوكب...";
-                updatePercentage(65, 1200);
-                simulateBotsProgress();
-                checkOfflineSession();
-                
-                if(!appData.onboarded) { openModal('onboarding-modal'); }
-                if(appData.avatarUrl) { document.getElementById('user-avatar-img').src = appData.avatarUrl; }
-                applyTitleCSS();
-            }, 3800);
+            if(statusTxt) statusTxt.innerText = "تفعيل محاكي دحيحة الكوكب...";
+            fastUpdatePercentage(65);
+            
+            // تنفس للمتصفح قبل أقوى عملية حسابية (البوتات)
+            await sleep(50);
+            
+            simulateBotsProgress();
+            checkOfflineSession();
+            
+            if(!appData.onboarded) { openModal('onboarding-modal'); }
+            if(appData.avatarUrl) { document.getElementById('user-avatar-img').src = appData.avatarUrl; }
+            applyTitleCSS();
 
-            // 4. بناء واجهة المستخدم والحسابات الثقيلة (عند 5.2 ثانية)
-            setTimeout(() => {
-                if(statusTxt) statusTxt.innerText = "بناء صرح الإمبراطورية...";
-                updatePercentage(100, 1000);
-                try { tippy('.tooltip-btn', { animation: 'scale', theme: 'translucent' }); } catch(e){}
-                applySettings(); initSettingsUI(); initNav(); initTimerLogic(); initTasks();  
-                updateAllAppUI(); checkDailyLogin(); renderTimebox();
-                
-                if(typeof checkUpdatesRedDot === 'function') checkUpdatesRedDot();
-                window.SmartDiscoveryEngine.init();
-            }, 5200);
+            if(statusTxt) statusTxt.innerText = "بناء صرح الإمبراطورية...";
+            fastUpdatePercentage(100);
+            
+            // تنفس أخير قبل بناء الواجهة بالكامل
+            await sleep(50);
+            
+            try { tippy('.tooltip-btn', { animation: 'scale', theme: 'translucent' }); } catch(e){}
+            
+            // بناء الـ UI
+            applySettings(); initSettingsUI(); initNav(); initTimerLogic(); initTasks();  
+            updateAllAppUI(); checkDailyLogin(); renderTimebox();
+            
+            if(typeof checkUpdatesRedDot === 'function') checkUpdatesRedDot();
+            window.SmartDiscoveryEngine.init();
 
-            // 5. المرحلة الثالثة من السينماتيك (عند 6.5 ثانية)
-            setTimeout(() => {
-                st2.classList.replace('opacity-100', 'opacity-0');
-                st2.classList.replace('scale-100', 'scale-110');
-                st3.classList.replace('opacity-0', 'opacity-100');
-                st3.classList.replace('scale-110', 'scale-100');
-            }, 6500);
+            // 3. المرحلة التالتة السريعة جداً
+            st2.classList.replace('opacity-100', 'opacity-0');
+            st2.classList.replace('scale-100', 'scale-110');
+            st3.classList.replace('opacity-0', 'opacity-100');
+            st3.classList.replace('scale-110', 'scale-100');
 
-            // 6. فتح التطبيق نهائياً بدقة تامة (عند 8.0 ثوانٍ)
+            // 4. فتح التطبيق فوراً
             setTimeout(() => { 
                 const splash = document.getElementById("splash-screen"); 
                 const appContainer = document.getElementById("app-container"); 
@@ -8422,7 +8542,7 @@
                 setTimeout(() => { 
                     splash.style.display="none"; 
                     appContainer.style.opacity=1; 
-                    window.isAppFullyLoaded = true; // تفعيل محرك الإذاعة الآن بأمان
+                    window.isAppFullyLoaded = true;
                     
                     if(typeof gsap !== 'undefined') {
                         gsap.from(appContainer, { y: 30, opacity: 0, duration: 0.8, ease: "power3.out" }); 
@@ -8436,10 +8556,10 @@
                     if(appData.onboarded) {
                         setTimeout(() => {
                             if(window.TourManager) window.TourManager.start('main');
-                        }, 1500); 
+                        }, 1000); 
                     }
-                }, 800); // إطالة أمد اختفاء الشاشة الافتتاحية لنعومة أكبر 
-            }, 8000);
+                }, 400); // وقت الأنيميشن للسبلاش عشان يختفي بنعومة
+            }, 800); // 800 مللي ثانية عشان تلحق عين المستخدم تقرأ الرسالة الأخيرة 
             
             // نظام تحفيز العداد
             window.updateTimerQuote = () => {
@@ -14901,10 +15021,10 @@
         }
     };
 
-    // Export/Import/Wipe logic from V1.2
-    window.exportData = () => { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `FocusV1_3_Backup_${dayjs().format('YYYY-MM-DD')}.json`); dlAnchorElem.click(); Swal.fire({toast:true, position:'top', title: 'تم تحميل النسخة', icon:'success', showConfirmButton:false, timer:3000, background: '#1e293b', color: '#fff'}); };
-    window.importData = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const imp = JSON.parse(e.target.result); if(imp && imp.advancedStats) { localStorage.setItem('focusMasryV9', JSON.stringify(imp)); Swal.fire({title: 'تم استرجاع البيانات!', icon:'success', background: '#1e293b', color: '#fff'}).then(()=>{ location.reload(); }); } else throw new Error("Invalid"); } catch (err) { Swal.fire({title: 'خطأ في الملف!', icon:'error', background: '#1e293b', color: '#fff'}); } }; reader.readAsText(file); };
-    window.wipeData = () => { Swal.fire({ title: 'هتمسح تعبك؟', text:'ده هيمسح كل الإنجازات!', icon: 'warning', showCancelButton: true, confirmButtonText: 'صفر العداد', cancelButtonText:'لا', confirmButtonColor: '#ef4444', background: '#1e293b', color: '#fff' }).then(r => { if(r.isConfirmed) { localStorage.clear(); location.reload(); } }); };
+    // Export/Import/Wipe logic for IndexedDB
+    window.exportData = () => { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData)); const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr); dlAnchorElem.setAttribute("download", `Focus_Empire_Backup_${dayjs().format('YYYY-MM-DD')}.json`); dlAnchorElem.click(); Swal.fire({toast:true, position:'top', title: 'تم تحميل النسخة', icon:'success', showConfirmButton:false, timer:3000, background: '#1e293b', color: '#fff'}); };
+    window.importData = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const imp = JSON.parse(e.target.result); if(imp && imp.advancedStats) { localStorage.setItem('focusMasryV9', JSON.stringify(imp)); localStorage.removeItem('focus_db_migrated'); Swal.fire({title: 'تم استرجاع البيانات!', icon:'success', background: '#1e293b', color: '#fff'}).then(()=>{ location.reload(); }); } else throw new Error("Invalid"); } catch (err) { Swal.fire({title: 'خطأ في الملف!', icon:'error', background: '#1e293b', color: '#fff'}); } }; reader.readAsText(file); };
+    window.wipeData = () => { Swal.fire({ title: 'هتمسح تعبك؟', text:'ده هيمسح كل الإنجازات للأبد!', icon: 'warning', showCancelButton: true, confirmButtonText: 'صفر العداد', cancelButtonText:'لا', confirmButtonColor: '#ef4444', background: '#1e293b', color: '#fff' }).then(r => { if(r.isConfirmed) { localStorage.clear(); indexedDB.deleteDatabase('focus_empire_rpg_xkq9b2_db'); location.reload(); } }); };
     window.saveReflection = (mood) => { 
         appData.dailyReflections.push({ date: dayjs().format('YYYY-MM-DD'), text: escapeHTML(document.getElementById('reflection-input').value), mood: mood }); 
         // إصلاح نزيف الذاكرة: الاحتفاظ بآخر 30 مراجعة فقط
