@@ -2145,6 +2145,50 @@
         </div>
     </div>
 
+    <!-- 🌌 NEW ARCHIVE MODALS 🌌 -->
+    <!-- 1. Stats Archive Modal -->
+    <div id="stats-archive-modal" class="modal-overlay" style="z-index: 10060;">
+        <div class="glass-card w-11/12 max-w-lg relative h-[85%] flex flex-col hide-scrollbar overflow-hidden" style="background: linear-gradient(180deg, #050b14 0%, #0f172a 100%); border: 2px solid #3b82f6;">
+            <button class="absolute top-3 left-3 text-blue-400 hover:text-white clickable-safe z-50 bg-black/50 w-8 h-8 rounded-full flex items-center justify-center shadow-lg" onclick="closeModal('stats-archive-modal')"><i class="fa-solid fa-times"></i></button>
+            <div class="p-4 border-b border-blue-500/30 text-center shrink-0 bg-blue-950/30">
+                <h2 class="text-2xl font-black text-blue-400 mb-1"><i class="fa-solid fa-boxes-stacked"></i> أرشيف المخابرات الشامل</h2>
+                <p class="text-[10px] text-gray-300 font-bold">كل الـ 80 مؤشر حيوي وتفاصيل دماغك محفوظين هنا.</p>
+            </div>
+            <div class="flex-1 overflow-y-auto hide-scrollbar p-4 custom-scroll" id="stats-archive-container"></div>
+        </div>
+    </div>
+
+    <!-- 2. Syllabus Archive Modal -->
+    <div id="syllabus-archive-modal" class="modal-overlay" style="z-index: 10060;">
+        <div class="glass-card w-11/12 max-w-md relative h-[80%] flex flex-col hide-scrollbar overflow-hidden" style="background: linear-gradient(180deg, #0f172a 0%, #020617 100%); border: 2px solid #06b6d4;">
+            <button class="absolute top-3 left-3 text-cyan-400 hover:text-white clickable-safe z-50 bg-black/50 w-8 h-8 rounded-full flex items-center justify-center shadow-lg" onclick="closeModal('syllabus-archive-modal')"><i class="fa-solid fa-times"></i></button>
+            <div class="p-4 border-b border-cyan-500/30 text-center shrink-0 bg-cyan-950/30">
+                <h2 class="text-2xl font-black text-cyan-400 mb-1"><i class="fa-solid fa-clock-rotate-left"></i> ذكريات الإمبراطورية</h2>
+                <p class="text-[10px] text-gray-300 font-bold">مناهجك، ترماتك، وسنينك القديمة اللي فرمتها محفوظة هنا.</p>
+            </div>
+            <div class="flex-1 overflow-y-auto hide-scrollbar p-4 custom-scroll" id="syllabus-archive-container"></div>
+        </div>
+    </div>
+
+    <!-- 3. Session Logs Modal -->
+    <div id="session-logs-modal" class="modal-overlay" style="z-index: 10060;">
+        <div class="glass-card w-11/12 max-w-md relative h-[85%] flex flex-col hide-scrollbar overflow-hidden" style="background: linear-gradient(180deg, #022c22 0%, #020617 100%); border: 2px solid #10b981;">
+            <button class="absolute top-3 left-3 text-emerald-400 hover:text-white clickable-safe z-50 bg-black/50 w-8 h-8 rounded-full flex items-center justify-center shadow-lg" onclick="closeModal('session-logs-modal')"><i class="fa-solid fa-times"></i></button>
+            <div class="p-4 border-b border-emerald-500/30 text-center shrink-0 bg-emerald-950/30">
+                <h2 class="text-2xl font-black text-emerald-400 mb-1"><i class="fa-solid fa-list-ul"></i> السجل التاريخي للجلسات</h2>
+                <p class="text-[10px] text-gray-300 font-bold">تاريخ ووقت كل دقيقة ذاكرتها متوثقة هنا للأبد.</p>
+            </div>
+            <div class="cyber-tabs shrink-0 mx-3 mt-3 mb-2">
+                <button class="cyber-tab-btn active clickable-safe shrink-0 flex-1" onclick="switchSessionFilter('all', this)">الكل</button>
+                <button class="cyber-tab-btn clickable-safe shrink-0 flex-1" onclick="switchSessionFilter('daily', this)">اليوم</button>
+                <button class="cyber-tab-btn clickable-safe shrink-0 flex-1" onclick="switchSessionFilter('weekly', this)">الأسبوع</button>
+                <button class="cyber-tab-btn clickable-safe shrink-0 flex-1" onclick="switchSessionFilter('monthly', this)">الشهر</button>
+                <button class="cyber-tab-btn clickable-safe shrink-0 flex-1" onclick="switchSessionFilter('yearly', this)">السنة</button>
+            </div>
+            <div class="flex-1 overflow-y-auto hide-scrollbar p-3 custom-scroll" id="session-logs-container"></div>
+        </div>
+    </div>
+
     <!-- Main App -->
     <div id="app-container">
         
@@ -4253,7 +4297,8 @@
             purchasedShapes: ['octahedron'], activeShape: 'octahedron', purchasedNames: ['default'], activeName: 'default', purchasedHeaders: ['default'], activeHeader: 'default',
             peakCallsExpires: "", libraryFavorites: [], librarySeen: [], libraryProgress: { motivation: 1, success: 1, riches: 1, advice: 1, mistakes: 1, favorites: 1 },
             barterData: { trades: [], karma: 0, lastUpdate: "", history: [] }, guildData: { myGuildId: null, allGuilds: [], logs: [], mutiny: { active: false, botId: null, targetMins: 0, currentMins: 0, deadline: null }, lastTick: Date.now(), weeklyResetDate: "", lastVaultUpdate: Date.now(), periodUserCoins: 0 },
-            skillTree: { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 }
+            skillTree: { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 },
+            sessionLogs: [], syllabusArchive: []
         };
 
         let appData = JSON.parse(JSON.stringify(defaultAppData));
@@ -4312,6 +4357,8 @@
 
                 // الحماية من الـ Undefined (زي الكود القديم بالظبط)
                 if(!appData.skillTree) appData.skillTree = { points: 0, spent: 0, nodes: {}, lastStreakSaveMonth: -1 };
+                if(!appData.sessionLogs) appData.sessionLogs = [];
+                if(!appData.syllabusArchive) appData.syllabusArchive = [];
                 if(!appData.luckyWheel) appData.luckyWheel = { dateKey: "", items: [] }; 
                 if(!appData.dailyAnnouncements) appData.dailyAnnouncements = { date: dayjs().format('YYYY-MM-DD'), logs: [] };
                 if(!appData.dailyAnnouncements.logs) appData.dailyAnnouncements.logs = [];
@@ -8995,8 +9042,21 @@
 
         function renderSyllabusCards() {
             const cont = document.getElementById('syllabus-cards-container'); let finalHTML = '';
+            
+            let topBarHTML = `
+                <div class="flex gap-2 mb-4 bg-slate-900/50 p-2 rounded-xl border border-white/5">
+                    <button class="btn btn-sm flex-1 bg-gradient-to-r from-red-600 to-rose-600 text-white border-none shadow-[0_0_15px_rgba(225,29,72,0.3)] clickable-safe" onclick="archiveCurrentSyllabus()">
+                        <i class="fa-solid fa-box-archive"></i> بدء منهج جديد
+                    </button>
+                    <button class="btn btn-sm flex-1 bg-slate-800 text-cyan-400 border border-cyan-500/30 hover:bg-slate-700 clickable-safe" onclick="openSyllabusArchiveModal()">
+                        <i class="fa-solid fa-clock-rotate-left"></i> المناهج السابقة
+                    </button>
+                </div>
+            `;
+            finalHTML += topBarHTML;
+
             if(appData.subjects.length === 0) { 
-                cont.innerHTML = `
+                cont.innerHTML = finalHTML + `
                     <div class="flex flex-col items-center justify-center py-16 opacity-70">
                         <div class="w-24 h-24 rounded-full bg-slate-900/80 flex items-center justify-center mb-4 border border-cyan-500/20 shadow-[0_0_40px_rgba(56,189,248,0.1)] relative" style="transform: translateZ(0);">
                             <i class="fa-solid fa-radar text-4xl text-cyan-500/50 animate-spin" style="animation-duration: 4s;"></i>
@@ -11310,37 +11370,47 @@
                 }
             ];
 
-            groups.forEach((g, idx) => {
-                let html = `<div class="stat-group-wrapper" style="--group-color: ${g.hex};"><div class="stat-group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</div><div class="grid grid-cols-2 gap-3 mt-2">`;
-                g.stats.forEach(st => { 
-                    html += `<div class="cyber-stat-node" style="--node-color: ${g.hex};"><div class="stat-val ${st.c}">${st.v}</div><div class="stat-lbl">${st.l}</div></div>`; 
-                });
-                html += `</div>`; // نهاية الجريد (Grid)
+            // --- التحديث: تقليل الزحمة وعرض الخلاصة فقط مع زر الأرشيف ---
+            // بناء كارت الخلاصة المدمج
+            let summaryHTML = `
+            <div class="bg-gradient-to-br from-slate-900 to-black border border-blue-500/30 p-4 rounded-2xl mb-4 shadow-[0_10px_30px_rgba(59,130,246,0.15)] relative overflow-hidden">
+                <i class="fa-solid fa-chart-pie absolute -left-4 -bottom-4 text-8xl text-blue-500/10"></i>
+                <h3 class="text-sm font-black text-blue-400 mb-3 border-b border-blue-500/30 pb-2 relative z-10"><i class="fa-solid fa-bolt text-yellow-400 mr-1"></i> الخلاصة الإمبراطورية</h3>
                 
-                // 🧠 واجهة عرض التحليل الإدراكي المتقدم 🧠
-                let aiText = appData.groupAIAnalysis.summaries[idx] || "تحليل معقد غير متوفر حالياً. يحتاج لبيانات.";
-                html += `
-                <div class="mt-4 bg-black/40 border border-t-2 border-[${g.hex}]/30 rounded-xl p-3 relative overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.6)] group hover:border-[${g.hex}]/60 transition-colors">
-                    <div class="absolute top-0 right-0 w-1.5 h-full" style="background-color: ${g.hex}; box-shadow: 0 0 15px ${g.hex};"></div>
-                    <div class="flex items-start gap-3 relative z-10">
-                        <div class="w-8 h-8 rounded-full bg-slate-900/80 flex items-center justify-center shrink-0 border border-white/5 relative">
-                            <i class="fa-solid fa-microchip animate-pulse" style="color: ${g.hex};"></i>
-                            <div class="absolute inset-0 rounded-full border-t border-[${g.hex}] animate-spin" style="animation-duration: 3s;"></div>
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2 mb-1.5">
-                                <h4 class="text-[10px] font-black tracking-widest uppercase" style="color: ${g.hex}; text-shadow: 0 0 5px ${g.hex}40;">المستشار السيبراني (A.I. CORE)</h4>
-                                <span class="text-[7px] bg-slate-800 text-gray-400 px-1 rounded-sm border border-slate-600">LIVE</span>
-                            </div>
-                            <p class="text-[11px] text-gray-300 font-semibold leading-relaxed" style="text-align: justify; text-justify: inter-word;">${aiText}</p>
-                        </div>
+                <div class="grid grid-cols-2 gap-3 relative z-10">
+                    <div class="bg-black/50 p-2 rounded-xl border border-white/5 text-center">
+                        <span class="block text-[10px] text-gray-400 font-bold mb-1">وقت الفرم الكلي</span>
+                        <span class="text-sm font-black text-blue-300">${(appData.totalMinutes/60).toFixed(1)} ساعة</span>
+                    </div>
+                    <div class="bg-black/50 p-2 rounded-xl border border-white/5 text-center">
+                        <span class="block text-[10px] text-gray-400 font-bold mb-1">المهام المطحونة</span>
+                        <span class="text-sm font-black text-emerald-400">${s.tasksCompleted}</span>
+                    </div>
+                    <div class="bg-black/50 p-2 rounded-xl border border-white/5 text-center">
+                        <span class="block text-[10px] text-gray-400 font-bold mb-1">أيام الانتظام</span>
+                        <span class="text-sm font-black text-orange-400">${appData.streak} 🔥</span>
+                    </div>
+                    <div class="bg-black/50 p-2 rounded-xl border border-white/5 text-center">
+                        <span class="block text-[10px] text-gray-400 font-bold mb-1">إجمالي الثروة</span>
+                        <span class="text-sm font-black text-yellow-400">${Math.floor(s.totalLifetimeCoins)} 🪙</span>
                     </div>
                 </div>
-                `;
 
-                html += `</div>`; // نهاية stat-group-wrapper
-                finalHTML += html;
-            });
+                <div class="flex gap-2 mt-4 relative z-10">
+                    <button class="btn btn-sm flex-1 bg-blue-600 hover:bg-blue-500 text-white border-none shadow-[0_0_15px_rgba(59,130,246,0.4)] clickable-safe" onclick="openStatsArchiveModal()">
+                        <i class="fa-solid fa-boxes-stacked"></i> كل الإحصائيات
+                    </button>
+                    <button class="btn btn-sm flex-1 bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-[0_0_15px_rgba(16,185,129,0.4)] clickable-safe" onclick="openSessionLogsModal()">
+                        <i class="fa-solid fa-list-ul"></i> سجل الجلسات
+                    </button>
+                </div>
+            </div>
+            `;
+            
+            // حفظ الداتا في الويندوز عشان المودال يقراها
+            window.tempStatsGroupsData = groups;
+            
+            finalHTML += summaryHTML;
             container.innerHTML = finalHTML;
 
             // Journey Progress Update
@@ -12608,6 +12678,17 @@
             // تسجيل التايم لاين لانتهاء الجلسة
             if(!appData.dailyTimeline) appData.dailyTimeline = { date: dayjs().format('YYYY-MM-DD'), logs: [] };
             appData.dailyTimeline.logs.push({ type: activeMode, mins: currentSessionMinutes, timestamp: Date.now() });
+
+            // تسجيل الجلسة في الأرشيف الدائم
+            if(!appData.sessionLogs) appData.sessionLogs = [];
+            appData.sessionLogs.push({
+                id: Date.now(),
+                date: dayjs().format('YYYY-MM-DD'),
+                time: dayjs().format('hh:mm A'),
+                mins: currentSessionMinutes,
+                mode: activeMode,
+                subj: currentSubject || 'بدون مادة'
+            });
 
             if(activeMode === 'focus') {
                 appData.advancedStats.sessionsCompleted++; 
@@ -22365,6 +22446,244 @@ const CURRENT_UPDATE_ID = "V71.0_LEADERBOARD_MASTER";
             }
         }
     }, 5000);
+
+    // ==========================================
+        // 🌌 ARCHIVE & LOGS ENGINE V1.0 🌌
+        // ==========================================
+
+        window.openStatsArchiveModal = () => {
+            playSound('click');
+            renderAllStatsArchive();
+            openModal('stats-archive-modal');
+        };
+
+        window.renderAllStatsArchive = () => {
+            const container = document.getElementById('stats-archive-container');
+            if(!window.tempStatsGroupsData) return;
+            
+            let html = '';
+            window.tempStatsGroupsData.forEach((g, idx) => {
+                html += `<div class="stat-group-wrapper" style="--group-color: ${g.hex};"><div class="stat-group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</div><div class="grid grid-cols-2 gap-3 mt-2">`;
+                g.stats.forEach(st => { 
+                    html += `<div class="cyber-stat-node" style="--node-color: ${g.hex};"><div class="stat-val ${st.c}">${st.v}</div><div class="stat-lbl">${st.l}</div></div>`; 
+                });
+                html += `</div></div>`; 
+            });
+            container.innerHTML = html;
+        };
+
+        window.archiveCurrentSyllabus = async () => {
+            playSound('click');
+            if (appData.subjects.length === 0) return infoAlert('مفيش منهج أصلاً عشان يتأرشف يابا!');
+
+            const { value: archiveName } = await Swal.fire({
+                title: 'حفظ وبدء منهج جديد 📦',
+                text: 'السيستم هياخد نسخة من منهجك الحالي بكل إحصائياته ويشيلها في الأرشيف، وهيفضيلك الساحة عشان تبدأ من الصفر كأنك لسه محمل التطبيق! اكتب اسم للأرشيف ده (مثال: ترم أول 2024):',
+                input: 'text',
+                inputPlaceholder: 'اسم الأرشيف...',
+                background: '#0f172a', color: '#fff', confirmButtonColor: '#ef4444', showCancelButton: true, cancelButtonText: 'إلغاء',
+                customClass: { popup: 'border border-red-500/50 rounded-3xl' },
+                preConfirm: (value) => {
+                    if (!value.trim()) { Swal.showValidationMessage('لازم تكتب اسم للأرشيف يابا!'); return false; }
+                    return value;
+                }
+            });
+
+            if (archiveName) {
+                // حفظ نسخة من المواد
+                let archivedData = {
+                    id: Date.now(),
+                    name: escapeHTML(archiveName.trim()),
+                    date: dayjs().format('YYYY-MM-DD'),
+                    subjects: JSON.parse(JSON.stringify(appData.subjects))
+                };
+                
+                if(!appData.syllabusArchive) appData.syllabusArchive = [];
+                appData.syllabusArchive.unshift(archivedData);
+                
+                // تصفير المواد والمحاضرات والجداول وكل ما يخص المنهج
+                appData.subjects = [];
+                appData.subjectStats = {};
+                appData.lastStudyDates = {};
+                appData.savedSchedules = {};
+                appData.subjectAIAnalysis = { lastUpdate: "", data: {} };
+                appData.zeroHourCache = {};
+                
+                saveState();
+                updateAllAppUI();
+                playSound('success');
+                Swal.fire({toast:true, position:'top', title:'تم الأرشفة وبدء صفحة جديدة! ✨', icon:'success', showConfirmButton:false, timer:3000, background:'#1e293b', color:'#10b981'});
+            }
+        };
+
+        window.openSyllabusArchiveModal = () => {
+            playSound('click');
+            renderSyllabusArchive();
+            openModal('syllabus-archive-modal');
+        };
+
+        window.renderSyllabusArchive = () => {
+            const container = document.getElementById('syllabus-archive-container');
+            if(!appData.syllabusArchive || appData.syllabusArchive.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 opacity-50"><i class="fa-solid fa-box-open text-5xl text-cyan-900 mb-4 block"></i><p class="text-white font-black text-sm">الأرشيف فاضي يابا</p></div>`;
+                return;
+            }
+
+            let html = '';
+            appData.syllabusArchive.forEach((arc, idx) => {
+                let totalLecs = 0; let totalStudied = 0;
+                arc.subjects.forEach(s => {
+                    totalLecs += s.lectures.length;
+                    totalStudied += s.lectures.filter(l => l.studied).length;
+                });
+                let prog = totalLecs > 0 ? Math.floor((totalStudied / totalLecs) * 100) : 0;
+
+                html += `
+                <div class="bg-slate-900 border border-cyan-500/30 p-3 rounded-xl mb-3 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                    <div class="flex justify-between items-center mb-2 border-b border-white/5 pb-2">
+                        <div>
+                            <h4 class="text-sm font-black text-white"><i class="fa-solid fa-folder-closed text-cyan-400 mr-1"></i> ${arc.name}</h4>
+                            <p class="text-[9px] text-gray-400 mt-1">تاريخ الحفظ: ${arc.date}</p>
+                        </div>
+                        <div class="text-center bg-black/50 px-3 py-1 rounded-lg border border-white/5">
+                            <span class="block text-[8px] text-gray-400 font-bold mb-0.5">نسبة الإنجاز</span>
+                            <span class="text-xs font-black text-cyan-300">${prog}%</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn-xs flex-1 bg-cyan-900/50 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/30" onclick="viewArchivedSyllabusDetails(${idx})"><i class="fa-solid fa-eye"></i> التفاصيل</button>
+                        <button class="btn btn-xs bg-red-900/50 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 w-10" onclick="deleteArchivedSyllabus(${idx})"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        };
+
+        window.viewArchivedSyllabusDetails = (idx) => {
+            playSound('click');
+            let arc = appData.syllabusArchive[idx];
+            if(!arc) return;
+            
+            let html = `<div class="max-h-[60vh] overflow-y-auto hide-scrollbar text-right pr-2">`;
+            arc.subjects.forEach(s => {
+                let st = s.lectures.filter(l=>l.studied).length;
+                let rv = s.lectures.filter(l=>l.reviewed).length;
+                let sl = s.lectures.filter(l=>l.solved).length;
+                let tot = s.lectures.length;
+                
+                html += `
+                <div class="bg-black/50 border border-white/10 p-2 rounded-lg mb-2">
+                    <h4 class="text-xs font-black text-blue-300 mb-2 border-b border-white/5 pb-1">${s.name}</h4>
+                    <div class="grid grid-cols-3 gap-1 text-center">
+                        <div class="bg-slate-800 rounded p-1"><span class="text-[8px] text-gray-400 block">محاضرات</span><span class="text-[10px] font-bold text-white">${tot}</span></div>
+                        <div class="bg-slate-800 rounded p-1"><span class="text-[8px] text-gray-400 block">مذاكرة</span><span class="text-[10px] font-bold text-green-400">${st}</span></div>
+                        <div class="bg-slate-800 rounded p-1"><span class="text-[8px] text-gray-400 block">مراجعة وحل</span><span class="text-[10px] font-bold text-purple-400">${rv + sl}</span></div>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+
+            Swal.fire({
+                title: `تفاصيل: ${arc.name}`,
+                html: html,
+                background: '#0f172a', color: '#fff', confirmButtonText: 'إغلاق', confirmButtonColor: '#8b5cf6',
+                customClass: { popup: 'border border-cyan-500/50 rounded-3xl' }
+            });
+        };
+
+        window.deleteArchivedSyllabus = (idx) => {
+            playSound('click');
+            Swal.fire({
+                title: 'مسح الأرشيف؟ 🗑️', text: 'متأكد إنك عايز تطير المنهج ده من ذكرياتك للأبد؟', icon: 'warning', showCancelButton: true,
+                confirmButtonText: 'امسح', cancelButtonText: 'إلغاء', background: '#0f172a', color: '#fff', confirmButtonColor: '#ef4444'
+            }).then(r => {
+                if(r.isConfirmed) {
+                    appData.syllabusArchive.splice(idx, 1);
+                    saveState(); renderSyllabusArchive(); playSound('success');
+                }
+            });
+        };
+
+        let currentSessionFilter = 'all';
+        window.openSessionLogsModal = () => {
+            playSound('click');
+            currentSessionFilter = 'all';
+            renderSessionLogs();
+            openModal('session-logs-modal');
+        };
+
+        window.switchSessionFilter = (filter, btn) => {
+            playSound('click');
+            currentSessionFilter = filter;
+            document.querySelectorAll('#session-logs-modal .cyber-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderSessionLogs();
+        };
+
+        window.renderSessionLogs = () => {
+            const container = document.getElementById('session-logs-container');
+            if(!appData.sessionLogs || appData.sessionLogs.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 opacity-50"><i class="fa-solid fa-clock-rotate-left text-5xl text-emerald-900 mb-4 block"></i><p class="text-white font-black text-sm">مفيش جلسات متسجلة لسه</p></div>`;
+                return;
+            }
+
+            let filteredLogs = [...appData.sessionLogs].sort((a, b) => b.id - a.id);
+            let now = dayjs();
+
+            if (currentSessionFilter !== 'all') {
+                filteredLogs = filteredLogs.filter(log => {
+                    let logDate = dayjs(log.date);
+                    if(currentSessionFilter === 'daily') return logDate.isSame(now, 'day');
+                    if(currentSessionFilter === 'weekly') return logDate.isAfter(now.subtract(7, 'day'));
+                    if(currentSessionFilter === 'monthly') return logDate.isSame(now, 'month');
+                    if(currentSessionFilter === 'yearly') return logDate.isSame(now, 'year');
+                    return true;
+                });
+            }
+
+            // Performance: Limit rendering to 150 items to prevent lag
+            let displayLogs = filteredLogs.slice(0, 150);
+
+            let html = '';
+            let totalMinsFiltered = 0;
+
+            displayLogs.forEach(log => {
+                totalMinsFiltered += log.mins;
+                let isFocus = log.mode === 'focus';
+                let iconC = isFocus ? 'text-violet-400' : log.mode === 'short' ? 'text-green-400' : 'text-blue-400';
+                let bgC = isFocus ? 'bg-violet-900/20 border-violet-500/30' : log.mode === 'short' ? 'bg-green-900/20 border-green-500/30' : 'bg-blue-900/20 border-blue-500/30';
+                let mName = isFocus ? 'فرم' : log.mode === 'short' ? 'بريك قصير' : 'بريك طويل';
+                
+                html += `
+                <div class="flex justify-between items-center p-2.5 rounded-xl border ${bgC} mb-2 shadow-sm animate-[sweep_0.3s_ease-out]">
+                    <div class="flex items-center gap-3 w-2/3 overflow-hidden">
+                        <div class="w-8 h-8 rounded-lg bg-black/50 border border-white/5 flex items-center justify-center shrink-0">
+                            <i class="fa-solid ${isFocus ? 'fa-fire' : 'fa-mug-hot'} ${iconC}"></i>
+                        </div>
+                        <div class="truncate">
+                            <h4 class="text-xs font-black text-white truncate w-full">${isFocus ? log.subj : mName}</h4>
+                            <p class="text-[9px] text-gray-400 mt-0.5"><i class="fa-regular fa-calendar mr-0.5"></i> ${log.date} | ${log.time}</p>
+                        </div>
+                    </div>
+                    <div class="text-center bg-black/40 px-2 py-1 rounded border border-white/5 shrink-0">
+                        <span class="text-xs font-black ${iconC}">${Math.floor(log.mins)} د</span>
+                    </div>
+                </div>`;
+            });
+
+            if (filteredLogs.length > 150) {
+                html += `<div class="text-center p-3 text-[10px] text-gray-500 font-bold bg-slate-900 rounded-lg">تم إخفاء باقي السجلات القديمة لتسريع التطبيق. إجمالي السجلات في هذه الفترة: ${filteredLogs.length}</div>`;
+            }
+
+            // Summary Header
+            let summaryHtml = `
+            <div class="bg-emerald-950/40 border border-emerald-500/40 p-3 rounded-xl mb-4 text-center shadow-[0_0_15px_rgba(16,185,129,0.15)] flex justify-around">
+                <div><span class="block text-[9px] text-gray-400 font-bold mb-1">جلسات معروضة</span><span class="text-sm font-black text-white">${filteredLogs.length}</span></div>
+                <div><span class="block text-[9px] text-gray-400 font-bold mb-1">إجمالي الوقت</span><span class="text-sm font-black text-emerald-400">${Math.floor(totalMinsFiltered/60)} ساعة</span></div>
+            </div>`;
+
+            container.innerHTML = summaryHtml + html;
+        };
 
     // ==========================================
     // PWA Service Worker Registration
